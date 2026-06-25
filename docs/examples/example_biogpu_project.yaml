@@ -1,0 +1,49 @@
+# scavenge 工具 GPU 加速示例项目配置
+# 这是一个真实完成项目的参考配置
+
+project_id: scavenge_20260601
+tool_name: scavenge
+mode: A
+
+harness:
+  root: /Users/huron/code/ai_lab/biogpu-harness
+  entrypoint: /bio-gpu-team
+  version: 0.1.0
+
+paths:
+  workspace_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge
+  bio_tool_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/bio_tool
+  state_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/state/task_state.json
+  reports_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/reports
+  runs_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/runs
+  benchmarks_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/benchmarks
+  baseline_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/baseline
+  logs_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/logs
+  pitfalls_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/pitfalls
+  artifacts_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/artifacts
+
+user_request:
+  summary: "端到端 GPU 加速，精度优先"
+  priority: accuracy_first
+  speedup_target: 1.15
+  notes: "v1.1 已交付，E2E Jaccard=0.9606，模块 speedup=202×，E2E speedup=2.1×"
+
+benchmarks:
+  primary_e2e:
+    status: pass
+    source: harness_selected
+    name: "1000G_scavenge_e2e"
+    path: "/mnt/shared-storage-gpfs2/liangxiuliang-2/scavenge/benchmarks/primary_e2e/"
+    input_manifest_path: "benchmarks/primary_e2e/input_manifest.yaml"
+  double_check_e2e:
+    status: skipped
+    source: user_provided
+    name: null
+    path: null
+    input_manifest_path: null
+
+configs:
+  rjob_config: configs/rjob_config.yaml
+  resource_budget: configs/resource_budget.yaml
+  image_config: configs/image_config.yaml
+  precision_config: configs/precision_config.yaml

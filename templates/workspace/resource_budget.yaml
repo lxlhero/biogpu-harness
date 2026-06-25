@@ -1,0 +1,6 @@
+# 资源预算配置
+
+max_rjobs_total: 50
+max_rjobs_per_module: 10
+max_gpu_hours_total: 20
+require_human_approval_after_gpu_hours: 10

@@ -1,0 +1,12 @@
+# rjob 提交配置
+
+namespace: ailab-ma4agismall
+private_machine: "group"
+charged_group: ma4agismall_gpu
+mount: "gpfs://gpfs2/liangxiuliang-2:/mnt/shared-storage-gpfs2/liangxiuliang-2"
+ssh_host: "huron-dev-1.liangxiuliang+root.ailab-ma4agismall.ws@h.pjlab.org.cn"
+
+# 默认资源
+gpu_count: 1
+cpu_count: 8
+memory_gb: 32

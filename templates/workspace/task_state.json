@@ -1,0 +1,57 @@
+{
+  "task_id": "example_tool_20260625",
+  "tool_name": "example_tool",
+  "mode": "A",
+
+  "current_step": "project_initialized",
+  "current_role": "bio-gpu-team",
+  "current_module": null,
+
+  "module_queue": [],
+  "attempt": 0,
+  "max_attempts_per_module": 3,
+
+  "next_action": "run_benchmark",
+  "last_result": null,
+
+  "human_approval_required": false,
+  "approval_reason": null,
+  "approved": false,
+
+  "tests": {
+    "primary_e2e": {
+      "status": "not_started",
+      "benchmark_source": "harness_selected",
+      "benchmark_name": null,
+      "benchmark_path": null,
+      "plan_path": null,
+      "input_manifest_path": null,
+      "cpu_result_path": null,
+      "gpu_result_path": null,
+      "compare_report_path": null,
+      "approved": false,
+      "pass": null
+    },
+    "double_check_e2e": {
+      "status": "not_requested",
+      "benchmark_source": "user_provided",
+      "benchmark_name": null,
+      "benchmark_path": null,
+      "plan_path": null,
+      "input_manifest_path": null,
+      "cpu_result_path": null,
+      "gpu_result_path": null,
+      "compare_report_path": null,
+      "approved": false,
+      "user_confirmed": false,
+      "pass": null
+    }
+  },
+
+  "execution_plan": {
+    "required": false,
+    "status": "not_started",
+    "path": null,
+    "user_approved": false
+  }
+}

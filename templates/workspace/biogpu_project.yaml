@@ -1,0 +1,46 @@
+project_id: example_tool_20260625
+tool_name: example_tool
+mode: A
+
+harness:
+  root: /Users/huron/code/ai_lab/biogpu-harness
+  entrypoint: /bio-gpu-team
+  version: 0.1.0
+
+paths:
+  workspace_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool
+  bio_tool_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/bio_tool
+  state_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/state/task_state.json
+  reports_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/reports
+  runs_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/runs
+  benchmarks_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/benchmarks
+  baseline_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/baseline
+  logs_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/logs
+  pitfalls_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/pitfalls
+  artifacts_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/artifacts
+
+user_request:
+  summary: ""
+  priority: accuracy_first
+  speedup_target: 1.15
+  notes: ""
+
+benchmarks:
+  primary_e2e:
+    status: not_ready
+    source: harness_selected
+    name: null
+    path: null
+    input_manifest_path: null
+  double_check_e2e:
+    status: not_requested
+    source: user_provided
+    name: null
+    path: null
+    input_manifest_path: null
+
+configs:
+  rjob_config: configs/rjob_config.yaml
+  resource_budget: configs/resource_budget.yaml
+  image_config: configs/image_config.yaml
+  precision_config: configs/precision_config.yaml

@@ -1,0 +1,27 @@
+project_name: biogpu-harness
+version: 0.1.0
+description: BioGPU-Harness 控制面 — 生信工具 GPU 加速 Agent Team
+
+entrypoint: /bio-gpu-team
+init_command: /bio-gpu-project-init
+
+harness_root: /Users/huron/code/ai_lab/biogpu-harness
+tool_workspaces_root: /Users/huron/code/ai_lab/transfer2gpu
+
+agents:
+  - bio-gpu-benchmark-agent
+  - bio-gpu-image-builder-agent
+  - bio-gpu-profiling-agent
+  - bio-gpu-feasibility-agent
+  - bio-gpu-test-planner-agent
+  - bio-gpu-test-runner-agent
+  - bio-gpu-code-planner-agent
+  - bio-gpu-dev-agent
+  - bio-gpu-code-reviewer-agent
+  - bio-gpu-module-tester-agent
+  - bio-gpu-existing-project-planner-agent
+  - bio-gpu-problem-analyst-agent
+  - bio-gpu-doc-writer-agent
+
+deprecated_commands:
+  - gpu-team  # redirect only, do not maintain as main orchestrator

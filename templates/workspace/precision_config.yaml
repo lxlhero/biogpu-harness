@@ -1,0 +1,33 @@
+# 精度阈值配置
+# 所有 agent 必须从此文件读取阈值，不手动指定
+
+thresholds:
+  continuous_score:
+    metric: pearson_r
+    threshold: 0.99
+    description: "连续评分（PIP、LD score、beta 等）"
+
+  p_value:
+    metric: pearson_r
+    threshold: 0.999
+    description: "p 值"
+
+  variance_parameter:
+    metric: ratio
+    min: 0.99
+    max: 1.01
+    description: "方差参数（sigma²、h²）"
+
+  credible_set:
+    metric: jaccard
+    threshold: 0.95
+    description: "可信集 / 显著集合（CS、QTL set）"
+
+  binary_classification:
+    metric: f1
+    threshold: 0.95
+    description: "二进制分类结果"
+
+# 特殊情况：算法非凸导致多局部最优时（如 SuSiE L≈L_true）
+# 需计算 ELBO 确认 |ΔELBO| < 1 nat，视为等价
+# elbo_tolerance: 1.0
