@@ -18,6 +18,16 @@
   "approval_reason": null,
   "approved": false,
 
+  "session_request": {
+    "tool_name": "example_tool",
+    "mode": "A",
+    "request_type": "from_scratch",
+    "summary": "",
+    "user_notes": "",
+    "allow_code_changes": true,
+    "requires_execution_plan_approval": false
+  },
+
   "tests": {
     "primary_e2e": {
       "status": "not_started",

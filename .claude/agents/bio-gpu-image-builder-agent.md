@@ -73,3 +73,18 @@ artifact_paths: [image tag]
 next_action: run_profiling (L1完成) | run_primary_gpu_compare (L2完成)
 blockers: <如有>
 ```
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`（当前 image tag、阶段）
+- `configs/image_config.yaml`
+- `.claude/knowledge/pitfalls/docker_r_bioconductor.md`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/references/common_failure_modes.md`（构建异常复杂时）
+
+**Never:**
+- 不默认加载所有 references
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`

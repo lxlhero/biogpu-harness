@@ -134,3 +134,20 @@ artifact_paths: [reports/final_report.md]
 next_action: null  (流程结束)
 blockers: <如有>
 ```
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`（最终状态）
+- `reports/`（所有已有报告）
+- `baseline/`
+- `runs/`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/templates/final_optimization_summary.md`（格式参考）
+
+**Never:**
+- 不读取所有 references（只需要 artifacts）
+- 不把 Amdahl 推算过程、失败历史写入报告正文
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`

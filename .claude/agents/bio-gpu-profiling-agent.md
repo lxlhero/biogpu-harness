@@ -83,3 +83,18 @@ artifact_paths:
 next_action: plan_primary_e2e | write_final_report
 blockers: <如有>
 ```
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`
+- `.claude/knowledge/methodology.md`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/references/bottleneck_analysis.md`（profiling 结果不清晰时）
+- `skills/bioinformatics-tool-gpu-skills/references/performance_metrics.md`
+
+**Never:**
+- 不默认加载所有 references
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`

@@ -130,3 +130,21 @@ next_action: implement_gpu_module | human_approval_required
 precision_risk: low | medium | high
 blockers: <如有>
 ```
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`
+- `reports/feasibility_report.md`
+- `.claude/knowledge/methodology.md`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/references/gpu_porting_principles.md`
+- `skills/bioinformatics-tool-gpu-skills/references/bioinformatics_gpu_patterns.md`
+- `skills/bioinformatics-tool-gpu-skills/references/gpu_suitability.md`
+
+**Never:**
+- 不默认加载所有 references
+- 不把长方法论正文复制进 implementation_plan
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`

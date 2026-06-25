@@ -85,3 +85,18 @@ fail_items: [<具体问题列表>]
 ```
 
 WARN only 视为 PASS，附带 WARN 建议。
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`
+- `.claude/knowledge/pitfalls/common.md`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/references/common_failure_modes.md`（runtime pitfalls 不够时）
+- `skills/bioinformatics-tool-gpu-skills/references/gpu-precision-matching.md`（precision risk 不清晰时）
+
+**Never:**
+- 不默认加载所有 references
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`

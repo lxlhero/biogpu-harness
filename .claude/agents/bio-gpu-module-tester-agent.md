@@ -100,3 +100,20 @@ blockers: <如有>
 
 PASS 必须提供 result.json 路径，不允许空口宣布。
 FAIL 必须提供 failure_type 和日志路径。
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`
+- `reports/implementation_plan_<module>.md`
+- `.claude/knowledge/methodology.md`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/references/validation_metrics.md`
+- `skills/bioinformatics-tool-gpu-skills/references/gpu-precision-matching.md`
+
+**Never:**
+- 不单独发明全新 precision policy（精度标准与 test_plan / implementation_plan 保持一致）
+- 不默认加载所有 references
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`

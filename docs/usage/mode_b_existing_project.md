@@ -51,5 +51,42 @@ B4  按 execution_plan 路由
 cd /Users/huron/code/ai_lab/biogpu-harness
 claude
 /bio-gpu-team
-# 然后提供 workspace_path
 ```
+
+启动后：第一问工具名称，第二问选择 B 模式，然后提供工作区路径和本次需求描述。
+
+**不再使用以下方式启动（已废弃）：**
+
+```bash
+# 旧方式，不再推荐
+/bio-gpu-team /path/to/biogpu_project.yaml
+```
+
+## B 模式向导问题
+
+```text
+1. 已有工程工作区在哪里？
+   默认：/Users/huron/code/ai_lab/transfer2gpu/<tool_name>
+
+2. 这次具体要做什么？
+   a. 修复精度不达标
+   b. 修复 E2E 测试失败
+   c. 修复 module test 失败
+   d. 修复运行错误 / rjob / Docker 错误
+   e. 优化速度
+   f. 继续下一个 GPU 加速模块
+   g. 重新设计或补跑 benchmark
+   h. 补做用户 double-check benchmark
+   i. 生成或更新最终报告
+   j. 其他，自由描述
+
+3. 是否允许 agent 修改已有 GPU 代码？（默认：允许）
+4. 是否需要在执行前确认 execution_plan.md？（默认：需要）
+```
+
+以下工程细节**无需用户回答**，由 bio-gpu-existing-project-planner-agent 自动判断：
+
+- 是否沿用已有 benchmark
+- 是否沿用已有 CPU baseline
+- 是否沿用已有 GPU 实现
+- 是否需要重新 profiling

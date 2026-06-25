@@ -64,3 +64,15 @@ cd /Users/huron/code/ai_lab/biogpu-harness
 claude
 /bio-gpu-team
 ```
+
+启动后：第一问工具名称，第二问选择 A 模式，然后描述加速目标即可。
+无需提供源码路径、精度要求或 rjob/Docker 配置。
+
+## A 模式不再询问的问题
+
+以下问题已从 A 模式向导中删除：
+
+- 生信工具源码路径 → 由 bio-gpu-benchmark-agent 自动查找并下载
+- 是否已有 CPU baseline → A 模式默认无，由 bio-gpu-test-runner-agent 建立
+- 精度要求 → 由 bio-gpu-test-planner-agent 自动判断，生成 test_plan 后交用户确认
+- 是否使用 rjob/Docker/集群 → 由 harness_config 和对应 agent 自动处理

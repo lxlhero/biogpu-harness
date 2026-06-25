@@ -74,3 +74,20 @@ recommended_modules: [<模块列表>]
 ```
 
 注意：本 agent 由 bio-gpu-profiling-agent 调用，结果返回给 profiling agent，不直接返回 /bio-gpu-team。
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`
+- `.claude/knowledge/methodology.md`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/references/gpu_suitability.md`
+- `skills/bioinformatics-tool-gpu-skills/references/gpu_porting_principles.md`
+- `skills/bioinformatics-tool-gpu-skills/references/bioinformatics_gpu_patterns.md`
+- `skills/bioinformatics-tool-gpu-skills/templates/feasibility_report.md`
+
+**Never:**
+- 不默认加载所有 references
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`

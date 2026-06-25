@@ -1,5 +1,9 @@
 # GPU 加速核心方法论
 
+> 本文件是运行时短摘要。详版见：
+> - `skills/bioinformatics-tool-gpu-skills/references/bottleneck_analysis.md`
+> - `skills/bioinformatics-tool-gpu-skills/references/bioinformatics_gpu_patterns.md`
+
 ## 1. 分析框架：Amdahl's Law
 
 GPU 化前必须先算 E2E 预期收益，不到 15% 不做：

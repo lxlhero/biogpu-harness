@@ -95,3 +95,20 @@ artifact_paths:
 next_action: review_gpu_code
 blockers: <如有>
 ```
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`
+- `reports/implementation_plan_<module>.md`（必须先读取）
+- `.claude/knowledge/pitfalls/common.md`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/references/gpu_porting_principles.md`
+- `skills/bioinformatics-tool-gpu-skills/references/bioinformatics_gpu_patterns.md`
+
+**Never:**
+- 不读取无关 benchmark/reference
+- 不把长方法论正文复制进代码
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`

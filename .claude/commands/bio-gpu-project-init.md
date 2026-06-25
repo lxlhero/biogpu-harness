@@ -1,73 +1,72 @@
 ---
-description: BioGPU-Harness 项目初始化向导 — 逐步询问用户并生成 biogpu_project.yaml 和工作区目录结构
+description: BioGPU-Harness 项目初始化向导 — 创建工作区结构和 biogpu_project.yaml
 ---
 
 # /bio-gpu-project-init — 项目初始化向导
 
-> 本命令由 `/bio-gpu-team` 在检测到无项目配置时调用，或用户直接调用。
-> 它像配置向导一样逐步询问用户，然后创建标准工作区结构。
+> 本命令由 `/bio-gpu-team` 在向导阶段调用。
+> 负责创建或补全工作区结构，不重复向用户询问 `/bio-gpu-team` 已采集的信息。
 
-## 询问顺序
+## A 模式初始化
 
-逐步询问以下问题（每步等待用户回答再继续）：
+### 接收来自 /bio-gpu-team 的信息
 
 ```
-1. 需要 GPU 加速的生信工具叫什么名称？
-
-2. 这是从头开始，还是继续优化/修复已有项目？
-   A = 从头开始 GPU 加速
-   B = 优化/修复已有 GPU 加速项目
-
-3. 生信工具源码在哪里？（请提供完整路径）
-
-4. 工具工作区放在哪里？
-   默认：/Users/huron/code/ai_lab/transfer2gpu/<tool_name>
-
-5. 当前用户需求是什么？（可多选）
-   - 端到端加速
-   - 修复精度问题
-   - 修复速度不达标
-   - 修复 Docker/rjob
-   - 继续做下一个模块
-   - 重新跑 benchmark
-   - 生成最终报告
-
-6. 是否已有 benchmark 数据？（有/无，如有请提供路径）
-
-7. 是否已有 CPU baseline 结果？（有/无）
-
-8. 是否已有 GPU 实现？（有/无）
-
-9. 精度要求是什么？（默认：accuracy_first）
-
-10. E2E 加速目标是多少倍？（默认：1.15）
-
-11. 是否使用集群 / rjob / Docker？（是/否）
+tool_name:             <工具名称>
+mode:                  A
+acceleration_goal:     <用户描述的加速目标>
+user_source:           <用户指定来源，如有>
+user_benchmark:        <用户指定 benchmark，如有>
+workspace_path:        <用户确认的工作区路径>
 ```
 
-## 确认前展示
+### A 模式禁止询问
 
-收集完所有信息后，展示确认摘要：
+- 生信工具源码路径
+- 是否已有 CPU baseline
+- 精度要求
+- 是否使用 rjob / Docker / 集群
+- 加速目标倍数
+
+### A 模式询问顺序
+
+仅在 /bio-gpu-team 未采集的信息缺失时补问，**每步等待用户回答再继续**。
+
+通常 /bio-gpu-team 已采集所有必要信息，本命令直接进入确认和创建。
+
+### 确认前展示
 
 ```
 即将创建 BioGPU project：
 
 tool_name:        <值>
-mode:             A / B
-bio_tool_path:    <值>
+mode:             A
 workspace_path:   <值>
-benchmark_source: harness_selected / user_provided
-precision_policy: accuracy_first / speed_first
-speedup_target:   <值>
-cluster_mode:     yes / no
+bio_tool_path:    <workspace_path>/bio_tool
+source:           <用户指定来源 或 "auto（由 agent 自动查找）">
+benchmark:        <用户指定 或 "auto（由 agent 自动选择）">
+precision_policy: auto（由 bio-gpu-test-planner-agent 判断）
 entrypoint:       /bio-gpu-team
 
 是否确认创建？（yes 继续 / no 重新配置）
 ```
 
+## B 模式初始化
+
+B 模式只在 `biogpu_project.yaml` 或 `task_state.json` 缺失时补建，**不覆盖已有 reports/runs/baseline**。
+
+### B 模式询问顺序
+
+仅在配置文件缺失时补问：
+
+```
+1. 工作区路径是否正确？（/bio-gpu-team 传入）
+2. 缺少 biogpu_project.yaml 时，补问 tool_name（如未知）
+```
+
 ## 确认后创建工作区
 
-确认后创建以下目录结构：
+确认后创建以下目录结构（已存在的目录跳过）：
 
 ```
 <workspace_path>/
@@ -93,12 +92,12 @@ entrypoint:       /bio-gpu-team
 └── artifacts/
 ```
 
-## biogpu_project.yaml 内容
+## biogpu_project.yaml 内容（A 模式）
 
 ```yaml
 project_id: <tool_name>_<YYYYMMDD>
 tool_name: <tool_name>
-mode: <A 或 B>
+mode: A
 
 harness:
   root: /Users/huron/code/ai_lab/biogpu-harness
@@ -107,7 +106,7 @@ harness:
 
 paths:
   workspace_path: <workspace_path>
-  bio_tool_path: <bio_tool_path>
+  bio_tool_path: <workspace_path>/bio_tool
   state_path: <workspace_path>/state/task_state.json
   reports_path: <workspace_path>/reports
   runs_path: <workspace_path>/runs
@@ -117,18 +116,25 @@ paths:
   pitfalls_path: <workspace_path>/pitfalls
   artifacts_path: <workspace_path>/artifacts
 
+source:
+  status: pending
+  user_specified_source: <true 如果用户提供了来源，否则 false>
+  source_url: <用户提供的 URL 或 null>
+  version: <用户提供的版本或 null>
+  install_method: auto
+
 user_request:
-  summary: "<用户需求描述>"
-  priority: <accuracy_first 或 speed_first>
-  speedup_target: <加速倍数>
+  summary: "<用户描述的 GPU 加速目标>"
+  priority: auto
+  speedup_target: auto
   notes: ""
 
 benchmarks:
   primary_e2e:
     status: not_ready
-    source: harness_selected
+    source: <user_provided 如果用户提供，否则 harness_selected>
     name: null
-    path: null
+    path: <用户提供的路径或 null>
     input_manifest_path: null
   double_check_e2e:
     status: not_requested
@@ -137,6 +143,11 @@ benchmarks:
     path: null
     input_manifest_path: null
 
+precision:
+  policy: auto
+  decided_by: bio-gpu-test-planner-agent
+  plan_path: null
+
 configs:
   rjob_config: configs/rjob_config.yaml
   resource_budget: configs/resource_budget.yaml
@@ -144,13 +155,13 @@ configs:
   precision_config: configs/precision_config.yaml
 ```
 
-## task_state.json 初始内容
+## task_state.json 初始内容（A 模式）
 
 ```json
 {
   "task_id": "<tool_name>_<YYYYMMDD>",
   "tool_name": "<tool_name>",
-  "mode": "<A 或 B>",
+  "mode": "A",
 
   "current_step": "project_initialized",
   "current_role": "bio-gpu-team",
@@ -208,6 +219,22 @@ configs:
 
 B 模式时 `execution_plan.required = true`，`next_action = "plan_existing_project"`。
 
+B 模式时还需写入 `session_request`（由 /bio-gpu-team 传入）：
+
+```json
+{
+  "session_request": {
+    "tool_name": "<tool_name>",
+    "mode": "B",
+    "request_type": "<类型>",
+    "summary": "<用户描述>",
+    "user_notes": "",
+    "allow_code_changes": true,
+    "requires_execution_plan_approval": true
+  }
+}
+```
+
 ## 创建完成后
 
 创建完成后输出：
@@ -215,12 +242,27 @@ B 模式时 `execution_plan.required = true`，`next_action = "plan_existing_pro
 ```
 BioGPU project 创建完成：
 
-workspace_path: <路径>
+workspace_path:      <路径>
 biogpu_project.yaml: <路径>
-task_state.json: <路径>
+task_state.json:     <路径>
 
-下一步：
-返回 /bio-gpu-team 继续执行流程。
+source.status:       pending（bio-gpu-benchmark-agent 将自动初始化工具源码）
+precision.policy:    auto（bio-gpu-test-planner-agent 将自动判断精度指标）
+
+下一步：返回 /bio-gpu-team 继续执行流程。
 ```
 
 然后将控制权交回 `/bio-gpu-team`。
+
+## Resource Layer Policy
+
+This command does not load long-form skill references.
+
+It reads only:
+- `CLAUDE.md`
+- `biogpu_project.yaml`（如已存在）
+- `state/task_state.json`（如已存在）
+
+Long-form references under `skills/bioinformatics-tool-gpu-skills/` are read by specialist agents on demand.
+
+Do not use deprecated path: `skills/bioinformatics-tool-gpu-ification`.

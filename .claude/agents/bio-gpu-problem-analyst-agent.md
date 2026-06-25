@@ -99,3 +99,20 @@ failure_type: <标准类型>
 root_cause: <一句话>
 blockers: <如有>
 ```
+
+## Resource Layer Policy
+
+**Always read:**
+- `biogpu_project.yaml`
+- `state/task_state.json`（`last_result`、`current_module`）
+- `.claude/knowledge/pitfalls/common.md`
+- `.claude/knowledge/pitfalls/docker_r_bioconductor.md`
+- `.claude/knowledge/pitfalls/r_reticulate.md`
+
+**Read on demand:**
+- `skills/bioinformatics-tool-gpu-skills/references/common_failure_modes.md`（runtime pitfalls 不够时）
+
+**Never:**
+- 不写代码、不提交 rjob、不修改配置
+- 不默认加载所有 references
+- 不使用旧路径 `skills/bioinformatics-tool-gpu-ification`
