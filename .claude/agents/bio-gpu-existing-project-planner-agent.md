@@ -154,6 +154,16 @@ recommended_next: <批准后建议的 next_action>
 blockers: <如有>
 ```
 
+## 事件日志（soft rule）
+
+关键阶段完成后调用 `log_event.py`：
+
+```bash
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-existing-project-planner-agent \
+  --event-type execution_plan_created --status pass --step plan_existing_project
+```
+
 ## Resource Layer Policy
 
 **Always read:**

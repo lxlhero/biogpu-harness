@@ -235,6 +235,22 @@ B 模式时还需写入 `session_request`（由 /bio-gpu-team 传入）：
 }
 ```
 
+## 创建完成后 Validator 检查
+
+工作区文件创建完成后，立即运行：
+
+```bash
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/validate_biogpu_project.py --workspace <workspace>
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/validate_task_state.py --workspace <workspace>
+```
+
+如果任一 validator fail：
+
+- 不要继续进入 benchmark-agent / existing-project-planner。
+- 向用户报告失败字段和原因，等待修复后再继续。
+
+两个 validator 全部 pass 后，才继续以下输出。
+
 ## 创建完成后
 
 创建完成后输出：

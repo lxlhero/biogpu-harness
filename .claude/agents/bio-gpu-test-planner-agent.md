@@ -98,6 +98,26 @@ precision:
 16. 失败类型枚举
 17. 失败路由
 18. `user_approval_required: true`
+19. **机器可读 `precision_config` YAML block**（`compare_precision.py` 依赖此字段，缺少则 test-runner 必须 blocked）
+
+格式：
+
+````markdown
+```yaml
+precision_config:
+  test_suite: primary_e2e
+  metrics:
+    - name: pearson
+      cpu_file: baseline/primary_e2e/normalized_cpu_scores.tsv
+      gpu_file: runs/primary_e2e/normalized_gpu_scores.tsv
+      key_column: gene_id
+      value_column: score
+      threshold: 0.99
+      direction: ">="
+```
+````
+
+边界：test-planner-agent 决定 metric / threshold / direction；`compare_precision.py` 只执行，不决定精度策略。
 
 ## Artifact Path Rules
 
@@ -139,6 +159,16 @@ artifact_paths:
   - benchmarks/<test_suite>/input_manifest.yaml
 next_action: approve_<test_suite>_plan  (触发 Human Approval Gate)
 blockers: <如有>
+```
+
+## 事件日志（soft rule）
+
+关键阶段完成后调用 `log_event.py`：
+
+```bash
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-test-planner-agent \
+  --event-type test_plan_created --status pass --step plan_primary_e2e
 ```
 
 ## Resource Layer Policy

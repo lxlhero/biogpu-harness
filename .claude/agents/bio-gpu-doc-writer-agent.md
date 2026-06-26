@@ -135,6 +135,16 @@ next_action: null  (流程结束)
 blockers: <如有>
 ```
 
+## 事件日志（soft rule）
+
+关键阶段完成后调用 `log_event.py`：
+
+```bash
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-doc-writer-agent \
+  --event-type final_report_written --status pass --step write_final_report
+```
+
 ## Resource Layer Policy
 
 **Always read:**

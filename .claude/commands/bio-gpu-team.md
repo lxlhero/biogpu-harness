@@ -108,6 +108,9 @@ if mode = A:
   → ask optional benchmark/dataset
   → ask workspace default yes/no
   → call /bio-gpu-project-init (mode=A)
+  → run: python scripts/validate_biogpu_project.py --workspace <workspace>
+  → run: python scripts/validate_task_state.py --workspace <workspace>
+  → if validator fail: stop, report errors, do not proceed
   → next_action = run_benchmark
 
 if mode = B:
@@ -115,6 +118,8 @@ if mode = B:
   → ask session_request (need, allow_code_changes, requires_plan_approval)
   → ensure biogpu_project.yaml / task_state.json exists
   → write task_state.session_request
+  → run: python scripts/validate_task_state.py --workspace <workspace>
+  → if validator fail: fix task_state.json first, do not enter existing-project-planner
   → next_action = plan_existing_project
   → call bio-gpu-existing-project-planner-agent
 ```

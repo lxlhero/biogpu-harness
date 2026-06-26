@@ -129,6 +129,20 @@ blockers: <如有>
 
 PASS 必须有 artifact 证据，不允许空口宣布。
 
+## 事件日志（soft rule）
+
+关键阶段完成后调用 `log_event.py`：
+
+```bash
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-benchmark-agent \
+  --event-type source_setup_completed --status pass --step setup_source
+
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-benchmark-agent \
+  --event-type benchmark_designed --status pass --step run_benchmark
+```
+
 ## Resource Layer Policy
 
 **Always read:**

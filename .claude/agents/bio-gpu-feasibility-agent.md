@@ -75,6 +75,16 @@ recommended_modules: [<模块列表>]
 
 注意：本 agent 由 bio-gpu-profiling-agent 调用，结果返回给 profiling agent，不直接返回 /bio-gpu-team。
 
+## 事件日志（soft rule）
+
+关键阶段完成后调用 `log_event.py`：
+
+```bash
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-feasibility-agent \
+  --event-type feasibility_completed --status pass --step assess_feasibility
+```
+
 ## Resource Layer Policy
 
 **Always read:**

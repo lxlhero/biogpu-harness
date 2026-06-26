@@ -43,8 +43,19 @@ memory: project
 
 1. CPU + GPU 在同一 rjob 里实时对比（保证 benchmark 一致）
 2. 按 test_plan.md 命令跑：`TOOL_DEVICE=cpu` 原版 + `TOOL_DEVICE=gpu` GPU 版
-3. 精度判断从 `precision_config.yaml` 读取，调用 compare 工具输出 PASS/FAIL
-4. 记录精度数值、速度倍数
+3. 若原始输出不是标准 TSV/CSV，先整理为 normalized TSV/CSV
+4. 调用 `compare_precision.py` 执行精度判断：
+
+```bash
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/compare_precision.py \
+  --workspace <workspace> \
+  --test-plan <workspace>/reports/test_plans/<test_suite>_test_plan.md \
+  --out-json <workspace>/reports/test_results/<test_suite>_precision.json \
+  --out-md <workspace>/reports/test_results/<test_suite>_precision.md
+```
+
+5. 如果 `compare_precision.py` 不支持某个 domain-specific metric，允许 fallback 到 agent 自定义比较，但必须在报告中写明 fallback reason
+6. 记录精度数值、速度倍数
 
 ### cpu_and_gpu_compare（double_check_e2e）
 
@@ -109,6 +120,27 @@ failure_type: <如有>
 
 PASS 必须提供 compare_report 路径，不允许空口宣布。
 FAIL 必须提供 failure_type、失败命令、日志路径。
+
+## 事件日志（soft rule）
+
+关键阶段完成后调用 `log_event.py`：
+
+```bash
+# 测试开始
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-test-runner-agent \
+  --event-type test_started --status running --step run_primary_cpu_baseline
+
+# 测试完成（pass / fail 对应 --status）
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-test-runner-agent \
+  --event-type test_completed --status pass --step run_primary_gpu_compare
+
+# 测试失败
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-test-runner-agent \
+  --event-type test_failed --status fail --step run_primary_gpu_compare
+```
 
 ## Resource Layer Policy
 

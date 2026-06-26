@@ -100,6 +100,16 @@ root_cause: <一句话>
 blockers: <如有>
 ```
 
+## 事件日志（soft rule）
+
+关键阶段完成后调用 `log_event.py`：
+
+```bash
+/Users/huron/miniconda3/envs/biogpu-harness/bin/python scripts/log_event.py \
+  --workspace <workspace> --agent bio-gpu-problem-analyst-agent \
+  --event-type failure_diagnosed --status info --step diagnose_failure
+```
+
 ## Resource Layer Policy
 
 **Always read:**
