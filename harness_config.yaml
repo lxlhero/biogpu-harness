@@ -21,6 +21,7 @@ agents:
   - bio-gpu-module-tester-agent
   - bio-gpu-existing-project-planner-agent
   - bio-gpu-problem-analyst-agent
+  - bio-gpu-trace-analyst-agent
   - bio-gpu-doc-writer-agent
 
 deprecated_commands:

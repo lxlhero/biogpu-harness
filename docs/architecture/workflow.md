@@ -208,6 +208,20 @@ orchestrator 是唯一执行主体。"角色切换"仅意味着加载不同指�
 
 **约束：** 不写 Amdahl 推算过程、失败历史、模块内部实现细节。
 
+── 2.15 bio-gpu-trace-analyst ───────────────────────────────────
+
+**描述：** 用于多 agent workflow 的 trace / evidence / state 诊断。当 validator、gate、agent workflow 出现不一致时，由它读取 `trace_context.json`、`events.jsonl`、`task_state.json` 和 `reports/` 来定位断链点、归因责任 agent，并输出修复方案。
+
+**与 problem-analyst-agent 的区别：**
+- problem-analyst-agent 分析"任务为什么失败"（GPU 代码、精度、runtime 错误）
+- trace-analyst-agent 分析"谁在什么时候把流程带偏了"（workflow 断链、artifact 缺失、state 异常）
+
+**触发时机：** task_state 与 events 不一致；artifact 缺失但 agent 声称 pass；trace_id/span_id 链路断裂；precision 结果不可追溯来源时。
+
+**输入：** `state/trace_context.json`、`logs/events.jsonl`、`state/task_state.json`、`reports/`。
+
+**输出：** `reports/debug/trace_analysis_<timestamp>.md`（timeline + broken_links + suspect_agent + fix_plan）。
+
 
 ═══ 三、模式 A — 全流程 GPU 化 ═══
 
