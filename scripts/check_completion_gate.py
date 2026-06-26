@@ -252,15 +252,16 @@ def gate_primary_e2e(workspace, test_suite, cfg, state, trace_ctx, events):
     else:
         evidence.append(prec_md)
 
-    # check event evidence
+    # check event evidence — only events whose step matches this suite
     relevant = [
         e for e in events
         if e.get("event_type") in ("test_completed", "command_executed")
         and e.get("status") == "pass"
+        and (e.get("step") == suite or suite in (e.get("step") or ""))
     ]
     if not relevant:
         errors.append(err("missing_event", "logs/events.jsonl",
-                          "no test_completed or command_executed pass event found"))
+                          f"no test_completed or command_executed pass event for suite '{suite}' found"))
     else:
         evidence.append("logs/events.jsonl")
         for ev in relevant:
