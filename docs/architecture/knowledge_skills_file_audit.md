@@ -26,7 +26,8 @@
 
 | File | Summary | Current Layer | Target Layer | Consumers | Problems | Decision | Action | Status |
 |------|---------|---------------|--------------|-----------|----------|----------|--------|--------|
-| `knowledge/methodology.md` | Amdahl's Law 公式、profiling 工具列表（Rprof/cProfile）、3 个 GPU 代码模式摘要 | knowledge | knowledge | 几乎所有 agents（启动时 always read）| 内容与 bottleneck_analysis.md + bioinformatics_gpu_patterns.md 重叠，但分工合理（摘要 vs 详版）；未说明与 skills 的关系 | keep + clarify | 在文件顶部加一句说明："详版见 skills/references/bottleneck_analysis.md 和 bioinformatics_gpu_patterns.md" | pending |
+| `knowledge/README.md` | knowledge 目录说明：定义 what belongs here、文件列表及与 skills/ 的分工关系 | knowledge | knowledge | 人类读者；agents 间接受益（通过理解目录结构）| 内容清晰，明确说明 knowledge vs skills 分工，无冗余 | keep | 无需修改 | done |
+| `knowledge/methodology.md` | Amdahl's Law 公式、profiling 工具列表（Rprof/cProfile）、3 个 GPU 代码模式摘要 | knowledge | knowledge | 几乎所有 agents（启动时 always read）| 内容与 bottleneck_analysis.md + bioinformatics_gpu_patterns.md 重叠，但分工合理（摘要 vs 详版）；已在文件顶部加跨引用说明 | keep | 已加说明："详版见 skills/references/bottleneck_analysis.md 和 bioinformatics_gpu_patterns.md" | done |
 | `knowledge/pitfalls/common.md` | P1 数值路径对齐规则 + P2 GPU 常见 bug（torch.diag / squeeze / sparse.mv）| knowledge | knowledge | code-reviewer、dev-agent、module-tester、problem-analyst | 内容与 common_failure_modes.md 有重叠，但定位清晰（速查 vs 详版）；格式为 code-reviewer P1/P2 checklist，定位合理 | keep | 无需修改，保持现状 | done |
 | `knowledge/pitfalls/docker_r_bioconductor.md` | Docker 构建 R/Bioconductor 版本匹配、BiocManager silent failure 检测方法 | knowledge | knowledge | image-builder、problem-analyst | 内容短、专注、有明确调用者；定位正确 | keep | 无需修改 | done |
 | `knowledge/pitfalls/r_reticulate.md` | reticulate 数据传递规则、py_run_string 路径规则 | knowledge | knowledge | code-reviewer、dev-agent、problem-analyst | 内容短、专注、有明确调用者；定位正确 | keep | 无需修改 | done |
@@ -40,7 +41,7 @@
 | File | Summary | Current Layer | Target Layer | Consumers | Problems | Decision | Action | Status |
 |------|---------|---------------|--------------|-----------|----------|----------|--------|--------|
 | `SKILL.md` | 定位说明 + 方法论索引 | skills | skills | 人类读者；agents 不直接执行 | 已重写为新版（定位清晰、加入 Usage Policy）| keep | 已在本次优化中重写 | done |
-| `SKILL.md.bak_20260624` | 旧版 SKILL.md 备份 | skills | docs/archive 或 delete | 无调用者 | 是过期备份，不应出现在 skills/ 目录下 | archive | 移到 docs/archive/ 或直接删除 | pending |
+| `SKILL.md.bak_20260624` | 旧版 SKILL.md 备份 | skills | docs/archive 或 delete | 无调用者 | 是过期备份，不应出现在 skills/ 目录下 | archive | 已从 skills/ 目录删除 | done |
 
 ### references/ 文件
 
@@ -76,9 +77,9 @@
 
 | Decision | 数量 | 文件 |
 |---------|------|------|
-| keep | 17 | 所有 knowledge 文件（4）、所有 references（11）、templates（5）、SKILL.md |
+| keep | 18 | 所有 knowledge 文件（5，含 README.md）、所有 references（11）、templates（5）、SKILL.md |
 | keep（暂时）| 2 | benchmark_real_data.py、e2e_checkpoint.sh |
-| archive | 1 | SKILL.md.bak_20260624 |
+| archive | 1 | SKILL.md.bak_20260624（已删除）|
 | delete | 0 | — |
 | move | 0 | — |
 | merge | 0 | — |
@@ -87,8 +88,8 @@
 
 ## 待处理项
 
-| 优先级 | 文件 | 操作 |
-|--------|------|------|
-| P1 | `SKILL.md.bak_20260624` | 删除或移到 docs/archive/ |
-| P2 | `knowledge/methodology.md` | 顶部加说明指向 skills 详版 |
-| P3 | `templates/benchmark_real_data.py`、`e2e_checkpoint.sh` | scripts/ 目录就绪后迁移 |
+| 优先级 | 文件 | 操作 | 状态 |
+|--------|------|------|------|
+| P1 | `SKILL.md.bak_20260624` | 删除或移到 docs/archive/ | done（已删除）|
+| P2 | `knowledge/methodology.md` | 顶部加说明指向 skills 详版 | done（已加跨引用）|
+| P3 | `templates/benchmark_real_data.py`、`e2e_checkpoint.sh` | scripts/ 目录就绪后迁移 | pending |

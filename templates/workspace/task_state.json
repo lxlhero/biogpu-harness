@@ -1,7 +1,7 @@
 {
-  "task_id": "example_tool_20260625",
-  "tool_name": "example_tool",
-  "mode": "A",
+  "task_id": null,
+  "tool_name": null,
+  "mode": null,
 
   "current_step": "project_initialized",
   "current_role": "bio-gpu-team",
@@ -19,13 +19,13 @@
   "approved": false,
 
   "session_request": {
-    "tool_name": "example_tool",
-    "mode": "A",
-    "request_type": "from_scratch",
+    "tool_name": null,
+    "mode": null,
+    "request_type": null,
     "summary": "",
     "user_notes": "",
     "allow_code_changes": true,
-    "requires_execution_plan_approval": false
+    "requires_execution_plan_approval": true
   },
 
   "tests": {

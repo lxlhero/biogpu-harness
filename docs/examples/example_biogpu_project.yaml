@@ -1,8 +1,9 @@
-# scavenge 工具 GPU 加速示例项目配置
-# 这是一个真实完成项目的参考配置
+# BioGPU-Harness example project configuration
+# This is a generic from-scratch (A-mode) example — not a real project.
+# For a real completed project, see: docs/examples/ (future case study files).
+# For the blank template, see: templates/workspace/biogpu_project.yaml
 
-project_id: scavenge_20260601
-tool_name: scavenge
+tool_name: example_tool
 mode: A
 
 harness:
@@ -11,39 +12,44 @@ harness:
   version: 0.1.0
 
 paths:
-  workspace_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge
-  bio_tool_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/bio_tool
-  state_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/state/task_state.json
-  reports_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/reports
-  runs_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/runs
-  benchmarks_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/benchmarks
-  baseline_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/baseline
-  logs_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/logs
-  pitfalls_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/pitfalls
-  artifacts_path: /Users/huron/code/ai_lab/transfer2gpu/scavenge/artifacts
+  workspace_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool
+  bio_tool_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/bio_tool
+  state_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/state/task_state.json
+  reports_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/reports
+  runs_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/runs
+  benchmarks_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/benchmarks
+  baseline_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/baseline
+  logs_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/logs
+  artifacts_path: /Users/huron/code/ai_lab/transfer2gpu/example_tool/artifacts
+
+source:
+  status: pending
+  user_specified_source: false
+  source_url: null
+  version: null
+  install_method: auto
 
 user_request:
-  summary: "端到端 GPU 加速，精度优先"
-  priority: accuracy_first
-  speedup_target: 1.15
-  notes: "v1.1 已交付，E2E Jaccard=0.9606，模块 speedup=202×，E2E speedup=2.1×"
+  summary: "Example from-scratch GPU acceleration request"
+  priority: auto
+  speedup_target: auto
+  notes: ""
 
 benchmarks:
   primary_e2e:
-    status: pass
+    status: not_ready
     source: harness_selected
-    name: "1000G_scavenge_e2e"
-    path: "/mnt/shared-storage-gpfs2/liangxiuliang-2/scavenge/benchmarks/primary_e2e/"
-    input_manifest_path: "benchmarks/primary_e2e/input_manifest.yaml"
+    name: null
+    path: null
+    input_manifest_path: null
   double_check_e2e:
-    status: skipped
+    status: not_requested
     source: user_provided
     name: null
     path: null
     input_manifest_path: null
 
-configs:
-  rjob_config: configs/rjob_config.yaml
-  resource_budget: configs/resource_budget.yaml
-  image_config: configs/image_config.yaml
-  precision_config: configs/precision_config.yaml
+precision:
+  policy: auto
+  decided_by: bio-gpu-test-planner-agent
+  plan_path: null
