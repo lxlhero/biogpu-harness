@@ -152,6 +152,4 @@ artifacts/
 目标：primary_e2e 已通过，我想提供一个新的 benchmark 做复核
 ```
 
-## 旧入口
 
-旧 `/gpu-team` 已废弃，请使用 `/bio-gpu-team`。
