@@ -1,0 +1,12 @@
+{
+  "task_id": null,
+  "tool_name": null,
+  "session_id": null,
+  "trace_id": null,
+  "root_span_id": null,
+  "current_span_id": null,
+  "created_at": null,
+  "created_by": "bio-gpu-team",
+  "updated_at": null,
+  "notes": ""
+}

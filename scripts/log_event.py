@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import uuid
 from datetime import datetime, timezone, timedelta
 
 HARNESS_ROOT = os.path.normpath("/Users/huron/code/ai_lab/biogpu-harness")
@@ -17,6 +18,10 @@ VALID_EVENT_TYPES = {
     "implementation_started", "implementation_completed", "review_completed",
     "module_test_completed", "failure_diagnosed", "execution_plan_created",
     "final_report_written", "blocked", "manual_approval_required", "dry_run_completed",
+    # Phase 2.2-A additions
+    "trace_context_created", "decision_made", "command_executed",
+    "artifact_created", "artifact_updated", "state_updated",
+    "gate_checked", "trace_analysis_requested",
 }
 
 VALID_STATUSES = {"pass", "fail", "running", "blocked", "warning", "info"}
@@ -27,6 +32,15 @@ SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 def now_iso():
     tz = timezone(timedelta(hours=8))
     return datetime.now(tz).isoformat(timespec="seconds")
+
+
+def short_id():
+    return uuid.uuid4().hex[:6]
+
+
+def ts_compact():
+    tz = timezone(timedelta(hours=8))
+    return datetime.now(tz).strftime("%Y%m%d_%H%M%S")
 
 
 def check_workspace(workspace):
@@ -46,7 +60,7 @@ def run_validator(script, workspace):
     return result.returncode, result.stdout.strip()
 
 
-def load_context(workspace):
+def load_project_context(workspace):
     ctx = {}
     project_file = os.path.join(workspace, "biogpu_project.yaml")
     state_file = os.path.join(workspace, "state", "task_state.json")
@@ -77,20 +91,63 @@ def load_context(workspace):
     return ctx
 
 
-def build_event(args_ns, ctx):
+def load_trace_context(workspace):
+    path = os.path.join(workspace, "state", "trace_context.json")
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def make_artifact_id(artifact_path, explicit_id=None):
+    if explicit_id:
+        return explicit_id
+    if not artifact_path:
+        return None
+    # derive from filename: reports/test_results/foo.json → art_foo_json_<short>
+    base = os.path.basename(artifact_path).replace(".", "_")
+    return f"art_{base}_{short_id()}"
+
+
+def build_event(args_ns, proj_ctx, trace_ctx):
+    ts = ts_compact()
+    sid = short_id()
+    event_id = f"evt_{ts}_{sid}"
+
+    # resolve tracing fields: explicit CLI > trace_context.json > None
+    trace_id = args_ns.trace_id or (trace_ctx.get("trace_id") if trace_ctx else None)
+    session_id = args_ns.session_id or (trace_ctx.get("session_id") if trace_ctx else None)
+    span_id = args_ns.span_id or (trace_ctx.get("current_span_id") if trace_ctx else None)
+    parent_span_id = args_ns.parent_span_id or (trace_ctx.get("root_span_id") if trace_ctx else None)
+
+    artifact_id = make_artifact_id(args_ns.artifact_path, args_ns.artifact_id)
+
     return {
+        "event_id": event_id,
         "timestamp": now_iso(),
-        "tool_name": ctx.get("tool_name"),
-        "task_id": ctx.get("task_id"),
-        "mode": ctx.get("mode"),
+        "tool_name": proj_ctx.get("tool_name"),
+        "task_id": proj_ctx.get("task_id"),
+        "session_id": session_id,
+        "trace_id": trace_id,
+        "span_id": span_id,
+        "parent_span_id": parent_span_id,
+        "mode": proj_ctx.get("mode"),
         "agent": args_ns.agent,
         "event_type": args_ns.event_type,
         "status": args_ns.status,
         "step": args_ns.step,
         "module": args_ns.module,
-        "attempt": ctx.get("attempt"),
+        "attempt": proj_ctx.get("attempt"),
+        "decision_id": args_ns.decision_id,
+        "command_id": args_ns.command_id,
+        "artifact_id": artifact_id,
         "artifact_path": args_ns.artifact_path,
-        "next_action": ctx.get("next_action"),
+        "command": args_ns.command,
+        "exit_code": args_ns.exit_code,
+        "next_action": proj_ctx.get("next_action"),
         "message": args_ns.message,
     }
 
@@ -105,8 +162,17 @@ def main():
     parser.add_argument("--module", default=None)
     parser.add_argument("--artifact-path", dest="artifact_path", default=None)
     parser.add_argument("--message", default=None)
-    parser.add_argument("--event-json", dest="event_json", default=None,
-                        help="Path to a JSON file containing event fields (merged over CLI args)")
+    parser.add_argument("--event-json", dest="event_json", default=None)
+    # tracing fields
+    parser.add_argument("--trace-id", dest="trace_id", default=None)
+    parser.add_argument("--session-id", dest="session_id", default=None)
+    parser.add_argument("--span-id", dest="span_id", default=None)
+    parser.add_argument("--parent-span-id", dest="parent_span_id", default=None)
+    parser.add_argument("--decision-id", dest="decision_id", default=None)
+    parser.add_argument("--command-id", dest="command_id", default=None)
+    parser.add_argument("--artifact-id", dest="artifact_id", default=None)
+    parser.add_argument("--command", dest="command", default=None)
+    parser.add_argument("--exit-code", dest="exit_code", type=int, default=None)
     args = parser.parse_args()
 
     errors = []
@@ -135,6 +201,21 @@ def main():
         print(json.dumps(out, indent=2))
         sys.exit(1)
 
+    # require trace_context.json (unless all tracing fields provided explicitly)
+    trace_ctx = load_trace_context(args.workspace)
+    has_explicit_trace = args.trace_id and args.session_id and args.span_id
+    if trace_ctx is None and not has_explicit_trace:
+        out = {
+            "status": "fail",
+            "errors": [{"field": "trace_context", "message": (
+                "trace_context.json not found. "
+                "Run: python scripts/init_trace_context.py --workspace <workspace> first."
+            )}],
+            "warnings": [],
+        }
+        print(json.dumps(out, indent=2))
+        sys.exit(1)
+
     # load event from --event-json if provided
     extra = {}
     if args.event_json:
@@ -146,11 +227,13 @@ def main():
             print(json.dumps(out, indent=2))
             sys.exit(2)
 
-    # merge: CLI args win over event_json defaults
-    for field in ("agent", "event_type", "status", "step", "module", "artifact_path", "message"):
-        cli_val = getattr(args, field.replace("-", "_"), None)
+    # merge CLI args over event_json defaults
+    for field in ("agent", "event_type", "status", "step", "module", "artifact_path", "message",
+                  "trace_id", "session_id", "span_id", "parent_span_id",
+                  "decision_id", "command_id", "artifact_id", "command"):
+        cli_val = getattr(args, field, None)
         if cli_val is None and field in extra:
-            setattr(args, field.replace("-", "_"), extra[field])
+            setattr(args, field, extra[field])
 
     event_type = getattr(args, "event_type", None)
     status = args.status
@@ -170,21 +253,18 @@ def main():
         print(json.dumps(out, indent=2))
         sys.exit(1)
 
-    # load context from workspace
-    ctx = load_context(args.workspace)
-    if ctx.get("tool_name") is None:
+    proj_ctx = load_project_context(args.workspace)
+    if proj_ctx.get("tool_name") is None:
         warnings.append("could not read tool_name from biogpu_project.yaml")
 
-    event = build_event(args, ctx)
+    event = build_event(args, proj_ctx, trace_ctx)
 
-    # write
     logs_dir = os.path.join(args.workspace, "logs")
     os.makedirs(logs_dir, exist_ok=True)
     event_file = os.path.join(logs_dir, "events.jsonl")
 
-    line = json.dumps(event, ensure_ascii=False)
     with open(event_file, "a") as f:
-        f.write(line + "\n")
+        f.write(json.dumps(event, ensure_ascii=False) + "\n")
 
     out = {
         "status": "pass",
