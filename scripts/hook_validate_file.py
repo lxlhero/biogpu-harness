@@ -35,6 +35,12 @@ def _detect_workspace(filepath):
     return None
 
 
+def _skipped(filepath, reason):
+    out = {"status": "skipped", "file": filepath, "reason": reason, "errors": [], "warnings": []}
+    print(json.dumps(out, indent=2))
+    return "skipped"
+
+
 def _result(status, filepath, checks, errors, warnings):
     out = {"status": status, "file": filepath, "checks": checks, "errors": errors, "warnings": warnings}
     print(json.dumps(out, indent=2))
@@ -151,15 +157,14 @@ def route(filepath):
     parent = os.path.basename(os.path.dirname(fp))
     grandparent = os.path.basename(os.path.dirname(os.path.dirname(fp)))
 
-    # Safety: never validate files inside HARNESS_ROOT as workspace files
-    # (the harness itself isn't a tool workspace)
-    ws_candidate = _detect_workspace(fp)
+    # File deleted / not yet on disk — skip gracefully
+    if not os.path.exists(fp):
+        return _skipped(fp, "file does not exist (may have been deleted)")
 
     if basename == "biogpu_project.yaml":
         ws = os.path.dirname(fp)
         if os.path.normpath(ws).startswith(HARNESS_ROOT):
-            # harness template — skip
-            return _result("pass", fp, ["skip"], [], ["harness template, not a tool workspace"])
+            return _skipped(fp, "harness template, not a tool workspace")
         return check_biogpu_project(fp, ws)
 
     if basename == "task_state.json" and parent == "state":
@@ -175,8 +180,8 @@ def route(filepath):
     if basename.endswith("_test_plan.md") and parent == "test_plans" and grandparent == "reports":
         return check_test_plan(fp)
 
-    # unrecognized file — pass silently
-    return _result("pass", fp, ["skip"], [], [f"not a known BioGPU-Harness artifact, skipping"])
+    # unrecognized file — skip silently
+    return _skipped(fp, "file type not managed by BioGPU hard gate")
 
 
 # ── main ──────────────────────────────────────────────────────────────────────
@@ -193,8 +198,7 @@ def main():
             hook_data = json.load(sys.stdin)
             filepath = (hook_data.get("tool_input", {}) or {}).get("file_path")
             if not filepath:
-                # No file path in payload — silently pass (e.g. Bash tool)
-                print(json.dumps({"status": "pass", "file": None, "checks": ["skip"], "errors": [], "warnings": ["no file_path in hook payload"]}))
+                print(json.dumps({"status": "skipped", "file": None, "reason": "no file_path in hook payload", "errors": [], "warnings": []}))
                 sys.exit(0)
         except Exception as e:
             print(json.dumps({"status": "error", "errors": [str(e)]}))
@@ -203,7 +207,7 @@ def main():
         filepath = args.file
 
     status = route(filepath)
-    sys.exit(0 if status == "pass" else 1)
+    sys.exit(0 if status in ("pass", "skipped") else 1)
 
 
 if __name__ == "__main__":
