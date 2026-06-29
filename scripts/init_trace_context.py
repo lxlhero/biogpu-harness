@@ -9,6 +9,9 @@ import sys
 import uuid
 from datetime import datetime, timezone, timedelta
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib.schema_utils import load_schema, validate_against_schema
+
 HARNESS_ROOT = os.path.normpath("/Users/huron/code/ai_lab/biogpu-harness")
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -122,6 +125,20 @@ def main():
     state_dir = os.path.join(args.workspace, "state")
     os.makedirs(state_dir, exist_ok=True)
     out_path = os.path.join(state_dir, "trace_context.json")
+
+    # ── schema validation before writing ─────────────────────────────────────
+    try:
+        schema = load_schema("trace_context.schema.json")
+        schema_errs = validate_against_schema(trace_ctx, schema)
+    except Exception as e:
+        schema_errs = [{"path": "(schema)", "message": str(e)}]
+
+    if schema_errs:
+        out = {"status": "fail", "schema_errors": schema_errs,
+               "errors": [e["message"] for e in schema_errs]}
+        print(json.dumps(out, indent=2))
+        sys.exit(1)
+
     with open(out_path, "w") as f:
         json.dump(trace_ctx, f, indent=2)
 

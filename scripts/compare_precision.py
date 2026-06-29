@@ -9,6 +9,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib.schema_utils import load_schema, validate_against_schema
+
 try:
     import yaml
     from scipy import stats
@@ -308,6 +311,21 @@ def main():
                    "errors": ["test_plan does not contain precision_config"]}
             print(json.dumps(out, indent=2))
             sys.exit(2)
+
+        # ── schema validation ─────────────────────────────────────────────────
+        try:
+            schema = load_schema("precision_config.schema.json")
+            schema_errs = validate_against_schema(cfg_root, schema)
+        except Exception as e:
+            schema_errs = [{"path": "(schema)", "message": str(e)}]
+
+        if schema_errs:
+            out = {"status": "error", "reason": "schema_fail",
+                   "schema_errors": schema_errs, "metrics": [], "failed_metrics": [],
+                   "errors": [e["message"] for e in schema_errs]}
+            print(json.dumps(out, indent=2))
+            sys.exit(2)
+
         pc = cfg_root.get("precision_config", cfg_root)
         test_suite = pc.get("test_suite", "unknown")
         metrics_cfg = pc.get("metrics", [])
