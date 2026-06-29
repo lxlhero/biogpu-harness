@@ -22,29 +22,58 @@ memory: project
 - `configs/image_config.yaml`
 - 调用方传入的阶段参数：`L1` | `L2` | `v1.0`
 
+## 执行环境
+
+**所有 docker build / push 在开发机上执行**（不在本机 macOS）。
+
+开发机 SSH：
+```bash
+ssh -CAXY huron-dev-1.liangxiuliang+root.ailab-ma4agismall.ws@h.pjlab.org.cn
+```
+
+Registry：`registry.h.pjlab.org.cn/ailab-sdpdev-sdpdev_gpu/`
+
+登录 registry（如未登录）：
+```bash
+docker login registry.h.pjlab.org.cn
+```
+
 ## L1 Build（A2 阶段）
 
 - 内容：原工具 + CUDA/PyTorch 依赖，无 GPU kernel
-- 命令：`docker build --no-cache --platform linux/amd64 -t <registry>/...:<date>-base .`
-- smoke test：`python3 -c "import torch; print(torch.cuda.is_available())"` 不报错
-- 完成后更新 `task_state.json`（记录 `base_image`）
+- 在开发机上执行：
+```bash
+cd /mnt/shared-storage-gpfs2/liangxiuliang-2/<tool>/
+docker build --no-cache -t registry.h.pjlab.org.cn/ailab-sdpdev-sdpdev_gpu/<tool>-base:<date> -f Dockerfile.base .
+docker push registry.h.pjlab.org.cn/ailab-sdpdev-sdpdev_gpu/<tool>-base:<date>
+```
+- smoke test（通过 rjob 提交验证）：`python3 -c "import torch; print(torch.cuda.is_available())"` 输出 True
+- 完成后更新 `task_state.json`（记录 `base_image` 完整 tag）
 
 ## L2 Build（A9 阶段）
 
-- 从 GPFS 复制已验证 kernel（COPY 指令，不做 runtime patch）
+- 从 GPFS 复制已验证 GPU kernel（COPY 指令，不做 runtime patch）
+- Dockerfile 放在 GPFS：`/mnt/shared-storage-gpfs2/liangxiuliang-2/<tool>/Dockerfile.gpu`
+- 在开发机上执行：
+```bash
+cd /mnt/shared-storage-gpfs2/liangxiuliang-2/<tool>/
+docker build -t registry.h.pjlab.org.cn/ailab-sdpdev-sdpdev_gpu/<tool>-gpu:v0.x -f Dockerfile.gpu .
+docker push registry.h.pjlab.org.cn/ailab-sdpdev-sdpdev_gpu/<tool>-gpu:v0.x
+```
 - 验证：`ast.parse()` 语法检查 + smoke test 最小输入不崩溃
 - 必须验证 CPU/GPU 切换：
   - `TOOL_DEVICE=cpu` 路径走原版实现不报错
   - `TOOL_DEVICE=gpu` 路径走 GPU kernel 不报错
 - tag：`:v0.x`（调试版）
 - **push 前必须进入 Human Approval Gate**（`approval_reason: "Build L2 release image"`）
-- 完成后更新 `task_state.json`（记录 `dev_image`）
+- 完成后更新 `task_state.json`（记录 `dev_image` 完整 tag）
 
 ## v1.0 Tag（最终交付）
 
 ```bash
-docker tag <registry>/...:v0.x <registry>/...:v1.0
-docker push <registry>/...:v1.0
+docker tag registry.h.pjlab.org.cn/ailab-sdpdev-sdpdev_gpu/<tool>-gpu:v0.x \
+           registry.h.pjlab.org.cn/ailab-sdpdev-sdpdev_gpu/<tool>-gpu:v1.0
+docker push registry.h.pjlab.org.cn/ailab-sdpdev-sdpdev_gpu/<tool>-gpu:v1.0
 ```
 
 v1.0 push 前必须进入 Human Approval Gate。
@@ -57,8 +86,9 @@ v1.0 push 前必须进入 Human Approval Gate。
 
 ## 注意
 
-- macOS Apple Silicon 必须加 `--platform linux/amd64`
+- 开发机是 x86_64 Linux，无需 `--platform linux/amd64`
 - 同 tag 推送新内容集群不重拉，必须换新 tag（v0.1 → v0.1.1）
+- 镜像 build 完成后立刻 push，不依赖开发机本地 cache（节点不同）
 
 ## Output Contract
 
