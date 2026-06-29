@@ -113,6 +113,27 @@ if mode = A:
   → if validator fail: stop, report errors, do not proceed
   → next_action = run_benchmark
 
+## ⛔ A 模式强制顺序 Gate（违反即 STOP，不得跳过）
+
+A 模式每个阶段有严格的前置条件，orchestrator 必须在路由前验证，不满足则 STOP 并告知用户：
+
+| 阶段 | 前置必须满足 | 验证方法 |
+|------|------------|---------|
+| A2 build_l1_image | A1 benchmark: 数据路径在 GPFS，非合成/非本地 | biogpu_project.yaml.benchmarks.primary_e2e.path 以 /mnt/ 开头 |
+| A3 run_profiling | A2 L1镜像已 push 到 registry | task_state.json.base_image 非 null 且包含 registry 地址 |
+| A3 run_profiling | **必须通过 rjob 在集群上执行** | profiling 脚本必须提交 rjob，不得本地运行 |
+| A4 plan_gpu_implementation (code-planner) | A3 profiling_report.md 存在且来自集群（非本地合成） | reports/profiling_report.md 存在，且含 rjob_id 字段 |
+| A7 implement_gpu_module (dev-agent) | A4 implementation_plan.md 已基于真实 profiling 结果生成 | implementation_plan.md 中的 hotspot_modules 与 profiling_report 一致 |
+| A8 module_test | **必须在集群镜像中执行** | 不得本地运行，必须通过 rjob 提交 |
+| A9 build_l2_image | A8 module_test PASS，有 artifact 证据 | artifacts/module_test_report.json 存在且 status=pass |
+| A10 run_primary_gpu_compare | A9 L2镜像已 push，A6 CPU baseline 存在 | dev_image 非 null，baseline/primary_e2e/ 目录非空 |
+
+**特别禁止（任何 agent 违反即 FAIL）：**
+1. 在 A3 profiling 之前写 GPU 代码（dev-agent 不得在 profiling 完成前启动）
+2. 在本地 macOS 运行任何需要在集群执行的步骤（benchmark/profiling/baseline/e2e）
+3. 用合成数据代替真实数据做 profiling（合成数据 profiling 结果无效）
+4. module_test Pearson r = 1.0 视为无效（说明 CPU vs CPU，非 GPU 测试）
+
 if mode = B:
   → ask existing workspace_path
   → ask session_request (need, allow_code_changes, requires_plan_approval)

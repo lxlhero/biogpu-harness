@@ -1,10 +1,19 @@
 # rjob 集群提交规范
 
+## 两台开发机说明
+
+有两台开发机，功能不同，不要混用：
+
+| 机器 | 用途 | SSH |
+|------|------|-----|
+| `ailab-ma4agismall` | rjob submit + gsMap GPFS 数据 | `ssh -CAXY huron-dev-1.liangxiuliang+root.ailab-ma4agismall.ws@h.pjlab.org.cn` |
+| `ailab-sdpdev` | docker build/push（已登录 registry）| `ssh -CAXY huron-dev-1.liangxiuliang+root.ailab-sdpdev.ws@h.pjlab.org.cn` |
+
 ## 提交方式
 
-rjob 必须在**开发机 shell**中执行（`brainpp` 包安装后，kubebrain 环境）。
+rjob 必须在 **ailab-ma4agismall 开发机** shell 中执行。
 
-SSH 登录开发机：
+SSH 登录：
 ```bash
 ssh -CAXY huron-dev-1.liangxiuliang+root.ailab-ma4agismall.ws@h.pjlab.org.cn
 ```
