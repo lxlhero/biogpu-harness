@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "event.schema.json",
+  "title": "BioGPU Event (events.jsonl single line)",
+  "type": "object",
+  "required": ["event_id", "timestamp", "agent", "event_type", "status"],
+  "additionalProperties": true,
+  "properties": {
+    "event_id":      { "type": "string" },
+    "timestamp":     { "type": "string" },
+    "tool_name":     { "type": ["string", "null"] },
+    "task_id":       { "type": ["string", "null"] },
+    "session_id":    { "type": ["string", "null"] },
+    "trace_id":      { "type": ["string", "null"] },
+    "span_id":       { "type": ["string", "null"] },
+    "parent_span_id":{ "type": ["string", "null"] },
+    "mode":          { "type": ["string", "null"] },
+    "agent":         { "type": ["string", "null"] },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "project_initialized", "source_setup_completed", "benchmark_designed",
+        "profiling_completed", "feasibility_completed", "test_plan_created",
+        "test_started", "test_completed", "test_failed",
+        "implementation_started", "implementation_completed", "review_completed",
+        "module_test_completed", "failure_diagnosed", "execution_plan_created",
+        "final_report_written", "blocked", "manual_approval_required", "dry_run_completed",
+        "trace_context_created", "decision_made", "command_executed",
+        "artifact_created", "artifact_updated", "state_updated",
+        "gate_checked", "trace_analysis_requested"
+      ]
+    },
+    "status": {
+      "type": ["string", "null"],
+      "enum": ["pass", "fail", "running", "blocked", "warning", "info", null]
+    },
+    "step":         { "type": ["string", "null"] },
+    "module":       { "type": ["string", "null"] },
+    "attempt":      { "type": ["integer", "null"] },
+    "decision_id":  { "type": ["string", "null"] },
+    "command_id":   { "type": ["string", "null"] },
+    "artifact_id":  { "type": ["string", "null"] },
+    "artifact_path":{ "type": ["string", "null"] },
+    "command":      { "type": ["string", "null"] },
+    "exit_code":    { "type": ["integer", "null"] },
+    "next_action":  { "type": ["string", "null"] },
+    "message":      { "type": ["string", "null"] }
+  }
+}

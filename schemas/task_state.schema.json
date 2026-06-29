@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "task_state.schema.json",
+  "title": "BioGPU Task State",
+  "type": "object",
+  "required": [
+    "task_id", "tool_name", "mode",
+    "current_step", "current_role", "current_module",
+    "module_queue", "attempt", "max_attempts_per_module",
+    "next_action", "last_result",
+    "human_approval_required", "approval_reason", "approved",
+    "tests", "session_request"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "task_id":    { "type": ["string", "null"] },
+    "tool_name":  { "type": ["string", "null"] },
+    "mode":       { "type": ["string", "null"], "enum": ["A", "B", null] },
+    "current_step":   { "type": ["string", "null"] },
+    "current_role":   { "type": ["string", "null"] },
+    "current_module": { "type": ["string", "null"] },
+    "module_queue":   { "type": "array" },
+    "attempt":    { "type": ["integer", "null"] },
+    "max_attempts_per_module": { "type": ["integer", "null"] },
+    "next_action": {
+      "type": ["string", "null"],
+      "enum": [
+        "initialize_project", "run_benchmark", "setup_source", "build_l1_image",
+        "run_profiling", "assess_feasibility", "plan_primary_e2e",
+        "run_primary_cpu_baseline", "plan_gpu_implementation", "implement_gpu_module",
+        "review_gpu_code", "run_module_test", "diagnose_failure", "build_l2_image",
+        "run_primary_gpu_compare", "ask_double_check", "plan_double_check_e2e",
+        "run_double_check_e2e", "plan_existing_project", "write_final_report",
+        "done", "blocked", "manual_review", "load_execution_plan", null
+      ]
+    },
+    "last_result":  { "type": ["string", "object", "null"] },
+    "human_approval_required": { "type": ["boolean", "null"] },
+    "approval_reason": { "type": ["string", "null"] },
+    "approved": { "type": ["boolean", "null"] },
+    "tests": {
+      "type": "object",
+      "properties": {
+        "primary_e2e":      { "$ref": "#/definitions/test_entry" },
+        "double_check_e2e": { "$ref": "#/definitions/test_entry" }
+      }
+    },
+    "session_request": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["tool_name", "mode", "request_type", "summary", "user_notes",
+                       "allow_code_changes", "requires_execution_plan_approval"],
+          "properties": {
+            "tool_name":  { "type": ["string", "null"] },
+            "mode":       { "type": ["string", "null"], "enum": ["A", "B", null] },
+            "request_type": {
+              "type": ["string", "null"],
+              "enum": [
+                "from_scratch", "fix_accuracy", "fix_e2e_failure",
+                "fix_module_test_failure", "fix_runtime_error", "fix_docker_or_rjob",
+                "optimize_speed", "continue_next_module", "rerun_benchmark",
+                "run_double_check", "write_final_report", "other", null
+              ]
+            },
+            "summary":     { "type": "string" },
+            "user_notes":  { "type": "string" },
+            "allow_code_changes": { "type": "boolean" },
+            "requires_execution_plan_approval": { "type": "boolean" }
+          }
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "test_entry": {
+      "type": "object",
+      "properties": {
+        "status":              { "type": ["string", "null"] },
+        "benchmark_source":    { "type": ["string", "null"] },
+        "benchmark_name":      { "type": ["string", "null"] },
+        "benchmark_path":      { "type": ["string", "null"] },
+        "plan_path":           { "type": ["string", "null"] },
+        "input_manifest_path": { "type": ["string", "null"] },
+        "cpu_result_path":     { "type": ["string", "null"] },
+        "gpu_result_path":     { "type": ["string", "null"] },
+        "compare_report_path": { "type": ["string", "null"] },
+        "approved":            { "type": ["boolean", "null"] },
+        "pass":                { "type": ["boolean", "null"] }
+      }
+    }
+  }
+}

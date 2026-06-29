@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "biogpu_project.schema.json",
+  "title": "BioGPU Project Configuration",
+  "type": "object",
+  "required": ["tool_name", "mode", "harness", "paths", "source", "user_request", "benchmarks", "precision"],
+  "additionalProperties": true,
+  "properties": {
+    "tool_name": { "type": "string", "minLength": 1 },
+    "mode": { "type": "string", "enum": ["A", "B"] },
+    "harness": {
+      "type": "object",
+      "required": ["root", "entrypoint", "version"],
+      "properties": {
+        "root":       { "type": "string" },
+        "entrypoint": { "type": "string", "enum": ["/bio-gpu-team"] },
+        "version":    { "type": "string" }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "required": [
+        "workspace_path", "bio_tool_path", "state_path",
+        "reports_path", "runs_path", "benchmarks_path",
+        "baseline_path", "logs_path", "artifacts_path"
+      ],
+      "properties": {
+        "workspace_path":  { "type": "string" },
+        "bio_tool_path":   { "type": "string" },
+        "state_path":      { "type": "string" },
+        "reports_path":    { "type": "string" },
+        "runs_path":       { "type": "string" },
+        "benchmarks_path": { "type": "string" },
+        "baseline_path":   { "type": "string" },
+        "logs_path":       { "type": "string" },
+        "artifacts_path":  { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["status", "user_specified_source", "source_url", "version", "install_method"],
+      "properties": {
+        "status":               { "type": "string", "enum": ["pending", "ready", "failed", "user_provided"] },
+        "user_specified_source": { "type": ["boolean", "null"] },
+        "source_url":           { "type": ["string", "null"] },
+        "version":              { "type": ["string", "null"] },
+        "install_method":       {
+          "type": "string",
+          "enum": ["auto", "git", "github", "gitcode", "pip", "conda", "local", "archive", "unknown"]
+        }
+      }
+    },
+    "user_request": {
+      "type": "object",
+      "required": ["summary", "priority", "speedup_target", "notes"],
+      "properties": {
+        "summary":       { "type": "string" },
+        "priority":      { "type": ["string", "null"] },
+        "speedup_target": { "type": ["string", "number", "null"] },
+        "notes":         { "type": "string" }
+      }
+    },
+    "benchmarks": {
+      "type": "object",
+      "required": ["primary_e2e", "double_check_e2e"],
+      "properties": {
+        "primary_e2e":      { "$ref": "#/definitions/benchmark_entry" },
+        "double_check_e2e": { "$ref": "#/definitions/benchmark_entry" }
+      }
+    },
+    "precision": {
+      "type": "object",
+      "required": ["policy", "decided_by", "plan_path"],
+      "properties": {
+        "policy":     { "type": "string", "enum": ["auto", "planned", "approved", "fixed"] },
+        "decided_by": { "type": "string" },
+        "plan_path":  { "type": ["string", "null"] }
+      }
+    }
+  },
+  "definitions": {
+    "benchmark_entry": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status":              { "type": "string" },
+        "source":              { "type": ["string", "null"] },
+        "name":                { "type": ["string", "null"] },
+        "path":                { "type": ["string", "null"] },
+        "input_manifest_path": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

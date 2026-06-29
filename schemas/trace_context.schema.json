@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "trace_context.schema.json",
+  "title": "BioGPU Trace Context",
+  "type": "object",
+  "required": ["task_id", "tool_name", "session_id", "trace_id",
+               "root_span_id", "current_span_id", "created_at", "created_by", "updated_at", "notes"],
+  "additionalProperties": true,
+  "properties": {
+    "task_id":         { "type": ["string", "null"] },
+    "tool_name":       { "type": ["string", "null"] },
+    "session_id":      { "type": ["string", "null"] },
+    "trace_id":        { "type": ["string", "null"] },
+    "root_span_id":    { "type": ["string", "null"] },
+    "current_span_id": { "type": ["string", "null"] },
+    "created_at":      { "type": ["string", "null"] },
+    "created_by":      { "type": "string" },
+    "updated_at":      { "type": ["string", "null"] },
+    "notes":           { "type": "string" }
+  }
+}
