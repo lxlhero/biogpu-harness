@@ -263,32 +263,40 @@ must follow these formatting rules:
 
 ## 8. rjob Rules
 
+**rjob must be submitted from the development machine shell** (not local macOS).
+
+Development machine SSH:
+
+```bash
+ssh -CAXY huron-dev-1.liangxiuliang+root.ailab-ma4agismall.ws@h.pjlab.org.cn
+```
+
+If rjob reports `brainpp only work in kubebrain environment`, run first:
+
+```bash
+source /etc/profile.d/ssh-init.sh
+```
+
 All rjob submissions must use inline bash:
 
 ```bash
-rjob submit -- bash -c '...'
+rjob submit \
+  --namespace=ailab-ma4agismall \
+  --private-machine=group \
+  --charged-group=ma4agismall_gpu \
+  --mount=gpfs://gpfs2/liangxiuliang-2:/mnt/shared-storage-gpfs2/liangxiuliang-2 \
+  -- bash -c '...'
 ```
 
-Required parameters:
+GPFS mount: `gpfs://gpfs2/liangxiuliang-2` → `/mnt/shared-storage-gpfs2/liangxiuliang-2`
+
+rjob outputs must be written to GPFS (container local storage is lost on job end):
 
 ```text
---namespace ailab-ma4agismall
---private-machine=group
---charged-group=ma4agismall_gpu
---mount=gpfs://gpfs2/liangxiuliang-2:/mnt/shared-storage-gpfs2/liangxiuliang-2
+/mnt/shared-storage-gpfs2/liangxiuliang-2/<tool>/runs/<step>/<timestamp>/
 ```
 
-SSH address:
-
-```text
-huron-dev-1.liangxiuliang+root.ailab-ma4agismall.ws@h.pjlab.org.cn
-```
-
-rjob outputs must be written to:
-
-```text
-runs/<step>/<module>/attempt_<N>/<rjob_id>/
-```
+Full rjob reference: `.claude/knowledge/rjob_cluster.md`
 
 If this repository is made public or shared outside the team, move cluster-specific values into a local, gitignored config file and keep only variable names in `CLAUDE.md`.
 
