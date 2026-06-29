@@ -126,20 +126,34 @@ artifacts/
 ### 示例 1：从头加速 scavenge
 
 ```text
-/bio-gpu-team
-工具名称：scavenge
-模式：A
-目标：端到端 GPU 加速，优先保证结果一致
+使用 /bio-gpu-team A 模式，从头对 <tool_name> 做 GPU 加速。
+
+workspace：
+/Users/huron/code/ai_lab/transfer2gpu/<tool_name>
+
+要求：
+1. 不覆盖已有目录，如已存在请新建 <tool_name>_harness_a_mode。
+2. 先用小规模 benchmark 跑完整闭环。
+3. requires_execution_plan_approval=true。
+4. 先通过 validators、trace_context、project_init gate 后再继续。
 ```
 
 ### 示例 2：继续优化 gsMap
 
 ```text
-/bio-gpu-team
-工具名称：gsMap
-模式：B
-工作区：/Users/huron/code/ai_lab/transfer2gpu/gsmap
-目标：当前加速只有 5%，希望重新 profiling 找瓶颈
+使用 /bio-gpu-team B 模式，继续处理已有 <tool_name> 项目。
+
+workspace：
+/Users/huron/code/ai_lab/transfer2gpu/<tool_name>
+
+本次任务：
+<修精度 / 重跑 benchmark / 优化速度 / 写 final report>
+
+要求：
+1. 不覆盖已有 artifacts。
+2. 先读取现有 biogpu_project.yaml、task_state.json、reports、runs、baseline、logs。
+3. 写入 session_request。
+4. 运行 validators、trace_context、project_init gate。
 ```
 
 ### 示例 3：给 scavenge 补做 double-check benchmark
