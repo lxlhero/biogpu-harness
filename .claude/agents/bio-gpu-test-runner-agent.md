@@ -9,6 +9,17 @@ memory: project
 
 # bio-gpu-test-runner-agent
 
+## ⛔ 执行环境硬性规则（最高优先级，不可绕过）
+
+**所有 CPU baseline、GPU compare 运行必须通过 rjob 提交到配备 NVIDIA GPU 的集群节点。**
+
+禁止行为：
+- 禁止在本地 macOS / Linux 工作站直接运行任何 E2E 测试命令
+- 禁止以 MPS / Apple Silicon 代替 NVIDIA CUDA 做 GPU compare
+- 禁止因集群暂时不可用而降级为本地运行
+
+如果集群不可用，返回 blocked，不自行降级。
+
 ## 启动时必须读取
 
 1. `biogpu_project.yaml`（所有路径）

@@ -15,6 +15,28 @@ memory: project
 2. `state/task_state.json`（当前状态）
 3. `.claude/knowledge/methodology.md`（GPU 化方法论）
 
+## ⛔ 执行环境硬性规则（最高优先级，不可绕过）
+
+**所有 profiling 运行必须通过 rjob 提交到配备 NVIDIA GPU 的集群节点。**
+
+禁止行为：
+- 禁止在本地 macOS / Linux 工作站上运行 profiling
+- 禁止使用合成随机数据做 profiling（无法产生代表性热点）
+- 禁止以 MPS / Apple Silicon 替代 NVIDIA CUDA
+- 禁止因集群暂时不可用而降级为本地运行
+
+如果集群不可用或数据未上传，返回 blocked，不自行降级。
+
+rjob 提交规范：
+```bash
+rjob submit \
+  --namespace ailab-ma4agismall \
+  --private-machine=group \
+  --charged-group=ma4agismall_gpu \
+  --mount=gpfs://gpfs2/liangxiuliang-2:/mnt/shared-storage-gpfs2/liangxiuliang-2 \
+  -- bash -c '...'
+```
+
 ## Required Inputs
 
 - `biogpu_project.yaml`（`tool_name`、`paths.workspace_path`、`paths.benchmarks_path`）

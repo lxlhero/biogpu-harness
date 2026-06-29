@@ -22,6 +22,34 @@ memory: project
 - `biogpu_project.yaml`（`source`、`paths.workspace_path`、`paths.benchmarks_path`、`tool_name`）
 - `state/task_state.json`（当前状态）
 
+## ⛔ 执行环境硬性规则（最高优先级，不可绕过）
+
+**所有 benchmark 运行、profiling 运行、精度验证运行，必须通过 rjob 提交到配备 NVIDIA GPU 的集群节点上执行。**
+
+禁止行为（无论任何理由）：
+- 禁止在本地 macOS / Linux 工作站上运行任何 benchmark 或 profiling 任务
+- 禁止使用合成随机数据替代真实工具数据（合成数据无法产生有效 profiling 热点）
+- 禁止因"本地方便"而降级为 CPU-only 运行
+- 禁止以 MPS / Apple Silicon GPU 替代 NVIDIA CUDA GPU
+- 禁止声称"本地验证通过"等同于 GPU 精度验证
+
+**如果集群不可用或数据尚未上传，返回 blocked，不要自行降级到本地执行。**
+
+rjob 提交规范（来自 CLAUDE.md §8）：
+
+```bash
+rjob submit \
+  --namespace ailab-ma4agismall \
+  --private-machine=group \
+  --charged-group=ma4agismall_gpu \
+  --mount=gpfs://gpfs2/liangxiuliang-2:/mnt/shared-storage-gpfs2/liangxiuliang-2 \
+  -- bash -c '...'
+```
+
+输出目录必须写到 GPFS 挂载路径下（`/mnt/shared-storage-gpfs2/liangxiuliang-2/...`），不写本地。
+
+---
+
 ## 执行流程
 
 ### Phase 1：工具源码初始化（A 模式，source.status = pending 时执行）
@@ -35,7 +63,7 @@ memory: project
    - 优先选择官方仓库最新稳定版
    - 如找到多个候选，选最主流的并在报告中说明
 
-3. 下载或 clone 工具到 `bio_tool_path`
+3. 下载或 clone 工具到 `bio_tool_path`（本地 workspace，仅用于代码读取）
 
 4. 生成 `reports/source_setup_report.md`（来源 URL / 版本 / 安装方式 / 验证结果）
 
@@ -56,7 +84,7 @@ memory: project
    ```
    **只有自动查找失败后，才向用户补问来源。**
 
-### Phase 2：benchmark 准备
+### Phase 2：benchmark 数据准备
 
 #### 若用户提供私有数据路径（biogpu_project.yaml.benchmarks.primary_e2e.path 非 null）：
 
@@ -65,17 +93,35 @@ memory: project
 3. 单独兼容性判断（每个路径）
 4. 互补性判断（多路径能否拼出完整输入）
 5. 输出分析报告等待确认
-6. 确认后执行数据准备，写入 GPFS
+6. 确认后将数据上传 / 整理到 GPFS
 
 #### 若无私有数据（source = harness_selected）：
 
-回退到公开数据集（1000G / GTEx / UK Biobank），选择与工具类型匹配的数据集。
+**优先使用工具官方 tutorial / example 数据**，其次公开数据集（1000G / GTEx / UK Biobank）。
+
+数据下载到 GPFS（`/mnt/shared-storage-gpfs2/liangxiuliang-2/<tool>/data/`），不存本地。
+
+若官方数据过大（> 50 GB），与用户确认后选子集。
+
+### Phase 3：rjob 验证运行（benchmark smoke test）
+
+在提交 rjob 验证运行前，先写好完整的 rjob 脚本（`configs/rjob_benchmark_smoke.sh`）。
+
+验证运行目标：
+- 确认工具在集群 GPU 节点上可正常安装和启动
+- 确认输入数据格式正确，pipeline 不报错
+- 记录 wall-clock 时间和 GPU 利用率（用于后续 profiling 基准）
+
+验证运行**不**要求完整跑完（可用小数据或 --dry-run），但必须产出至少一个中间输出文件作为 artifact 证据。
+
+rjob 输出写到：`runs/benchmark_smoke/<rjob_id>/`（GPFS 路径）
 
 ### 关键约束
 
 - E2E benchmark 必须与 profiling benchmark 数据独立
 - 仅有一份数据时 8:2 划分，在报告中注明
 - bench_e2e 只用于最终验证，不得用于开发调试
+- **所有运行必须在集群 NVIDIA GPU 节点，不得本地执行**
 
 ## Output Contract
 
