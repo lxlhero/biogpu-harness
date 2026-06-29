@@ -6,58 +6,27 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(__file__))
+
+from lib.schema_utils import load_schema, validate_against_schema
+
 VALID_MODES = {"A", "B"}
 
 VALID_REQUEST_TYPES = {
-    "from_scratch",
-    "fix_accuracy",
-    "fix_e2e_failure",
-    "fix_module_test_failure",
-    "fix_runtime_error",
-    "fix_docker_or_rjob",
-    "optimize_speed",
-    "continue_next_module",
-    "rerun_benchmark",
-    "run_double_check",
-    "write_final_report",
-    "other",
+    "from_scratch", "fix_accuracy", "fix_e2e_failure", "fix_module_test_failure",
+    "fix_runtime_error", "fix_docker_or_rjob", "optimize_speed", "continue_next_module",
+    "rerun_benchmark", "run_double_check", "write_final_report", "other",
 }
 
 VALID_NEXT_ACTIONS = {
-    "initialize_project",
-    "run_benchmark",
-    "setup_source",
-    "build_l1_image",
-    "run_profiling",
-    "assess_feasibility",
-    "plan_primary_e2e",
-    "run_primary_cpu_baseline",
-    "plan_gpu_implementation",
-    "implement_gpu_module",
-    "review_gpu_code",
-    "run_module_test",
-    "diagnose_failure",
-    "build_l2_image",
-    "run_primary_gpu_compare",
-    "ask_double_check",
-    "plan_double_check_e2e",
-    "run_double_check_e2e",
-    "plan_existing_project",
-    "write_final_report",
-    "done",
-    "blocked",
-    "manual_review",
-    "load_execution_plan",
+    "initialize_project", "run_benchmark", "setup_source", "build_l1_image",
+    "run_profiling", "assess_feasibility", "plan_primary_e2e",
+    "run_primary_cpu_baseline", "plan_gpu_implementation", "implement_gpu_module",
+    "review_gpu_code", "run_module_test", "diagnose_failure", "build_l2_image",
+    "run_primary_gpu_compare", "ask_double_check", "plan_double_check_e2e",
+    "run_double_check_e2e", "plan_existing_project", "write_final_report",
+    "done", "blocked", "manual_review", "load_execution_plan",
 }
-
-REQUIRED_TOP = [
-    "task_id", "tool_name", "mode",
-    "current_step", "current_role", "current_module",
-    "module_queue", "attempt", "max_attempts_per_module",
-    "next_action", "last_result",
-    "human_approval_required", "approval_reason", "approved",
-    "tests", "session_request",
-]
 
 REQUIRED_TESTS_E2E = [
     "status", "benchmark_source", "benchmark_name", "benchmark_path",
@@ -71,42 +40,29 @@ REQUIRED_SESSION_REQUEST = [
 ]
 
 
-def validate(state, filepath):
+def custom_validate(state):
+    """Workflow-logic checks that go beyond JSON Schema constraints."""
     errors = []
     warnings = []
 
-    # Required top-level fields
-    for key in REQUIRED_TOP:
-        if key not in state:
-            errors.append(f"Missing required field: {key}")
-
-    if errors:
-        return errors, warnings
-
-    # mode
     mode = state.get("mode")
-    if mode not in VALID_MODES:
-        errors.append(f"mode must be one of {VALID_MODES}, got: {mode!r}")
 
-    # next_action
+    # next_action whitelist (schema already covers enum, but belt-and-suspenders)
     next_action = state.get("next_action")
-    if next_action not in VALID_NEXT_ACTIONS:
-        errors.append(f"next_action '{next_action}' is not a valid value; must be one of {sorted(VALID_NEXT_ACTIONS)}")
+    if next_action is not None and next_action not in VALID_NEXT_ACTIONS:
+        errors.append(f"next_action '{next_action}' is not a valid value; "
+                      f"must be one of {sorted(VALID_NEXT_ACTIONS)}")
 
-    # tests
+    # tests sub-fields
     tests = state.get("tests", {})
-    if not isinstance(tests, dict):
-        errors.append("tests must be a dict")
-    else:
+    if isinstance(tests, dict):
         for suite in ("primary_e2e", "double_check_e2e"):
-            if suite not in tests:
-                errors.append(f"Missing required field: tests.{suite}")
-            else:
+            if suite in tests:
                 for key in REQUIRED_TESTS_E2E:
                     if key not in tests[suite]:
                         errors.append(f"Missing required field: tests.{suite}.{key}")
 
-    # session_request
+    # session_request mode-specific rules
     sr = state.get("session_request")
     if mode == "B":
         if sr is None:
@@ -119,20 +75,19 @@ def validate(state, filepath):
                 errors.append(f"session_request.mode must be 'B', got: {sr.get('mode')!r}")
             rt = sr.get("request_type")
             if rt not in VALID_REQUEST_TYPES:
-                errors.append(f"session_request.request_type '{rt}' is not valid; must be one of {sorted(VALID_REQUEST_TYPES)}")
+                errors.append(f"session_request.request_type '{rt}' is not valid; "
+                               f"must be one of {sorted(VALID_REQUEST_TYPES)}")
             if not sr.get("tool_name"):
                 errors.append("session_request.tool_name must not be empty in B mode")
             if not sr.get("summary"):
                 warnings.append("session_request.summary is empty (recommended to fill in B mode)")
-    elif mode == "A":
-        # session_request may be null in A mode
-        if sr is not None:
-            for key in REQUIRED_SESSION_REQUEST:
-                if key not in sr:
-                    errors.append(f"Missing required field: session_request.{key}")
-            rt = sr.get("request_type")
-            if rt and rt not in VALID_REQUEST_TYPES:
-                errors.append(f"session_request.request_type '{rt}' is not valid")
+    elif mode == "A" and sr is not None:
+        for key in REQUIRED_SESSION_REQUEST:
+            if key not in sr:
+                errors.append(f"Missing required field: session_request.{key}")
+        rt = sr.get("request_type")
+        if rt and rt not in VALID_REQUEST_TYPES:
+            errors.append(f"session_request.request_type '{rt}' is not valid")
 
     # attempt sanity
     attempt = state.get("attempt")
@@ -150,27 +105,56 @@ def main():
     group.add_argument("--state", help="Path to task_state.json")
     args = parser.parse_args()
 
-    if args.workspace:
-        filepath = os.path.join(args.workspace, "state", "task_state.json")
-    else:
-        filepath = args.state
+    filepath = (os.path.join(args.workspace, "state", "task_state.json")
+                if args.workspace else args.state)
 
     try:
         with open(filepath) as f:
             state = json.load(f)
     except FileNotFoundError:
-        result = {"status": "fail", "file": filepath, "errors": [f"File not found: {filepath}"], "warnings": []}
-        print(json.dumps(result, indent=2))
+        out = {"status": "fail", "file": filepath,
+               "schema_errors": [], "custom_errors": [],
+               "errors": [f"File not found: {filepath}"], "warnings": []}
+        print(json.dumps(out, indent=2))
         sys.exit(1)
     except json.JSONDecodeError as e:
-        result = {"status": "error", "file": filepath, "errors": [f"Invalid JSON: {e}"], "warnings": []}
-        print(json.dumps(result, indent=2))
+        out = {"status": "error", "file": filepath,
+               "schema_errors": [], "custom_errors": [],
+               "errors": [f"Invalid JSON: {e}"], "warnings": []}
+        print(json.dumps(out, indent=2))
         sys.exit(2)
 
-    errors, warnings = validate(state, filepath)
-    status = "pass" if not errors else "fail"
-    result = {"status": status, "file": filepath, "errors": errors, "warnings": warnings}
-    print(json.dumps(result, indent=2))
+    # ── 1. Schema validation ──────────────────────────────────────────────────
+    try:
+        schema = load_schema("task_state.schema.json")
+        schema_errors = validate_against_schema(state, schema)
+    except Exception as e:
+        out = {"status": "error", "file": filepath,
+               "schema_errors": [], "custom_errors": [],
+               "errors": [f"Schema validation error: {e}"], "warnings": []}
+        print(json.dumps(out, indent=2))
+        sys.exit(2)
+
+    if schema_errors:
+        out = {"status": "fail", "file": filepath,
+               "schema_errors": schema_errors, "custom_errors": [],
+               "errors": [e["message"] for e in schema_errors], "warnings": []}
+        print(json.dumps(out, indent=2))
+        sys.exit(1)
+
+    # ── 2. Custom validation ──────────────────────────────────────────────────
+    custom_errors, warnings = custom_validate(state)
+
+    status = "pass" if not custom_errors else "fail"
+    out = {
+        "status": status,
+        "file": filepath,
+        "schema_errors": [],
+        "custom_errors": custom_errors,
+        "errors": custom_errors,
+        "warnings": warnings,
+    }
+    print(json.dumps(out, indent=2))
     sys.exit(0 if status == "pass" else 1)
 
 

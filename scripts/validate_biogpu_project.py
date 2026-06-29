@@ -6,31 +6,25 @@ import json
 import os
 import sys
 
+# allow running from any cwd by adding scripts/ to path
+sys.path.insert(0, os.path.dirname(__file__))
+
 try:
     import yaml
 except ImportError:
-    print(json.dumps({"status": "error", "errors": ["PyYAML not installed: pip install pyyaml"], "warnings": []}))
+    print(json.dumps({"status": "error", "schema_errors": [], "custom_errors": [],
+                      "errors": ["PyYAML not installed: pip install pyyaml"], "warnings": []}))
     sys.exit(2)
 
-HARNESS_ROOT = "/Users/huron/code/ai_lab/biogpu-harness"
+from lib.schema_utils import load_schema, validate_against_schema
 
-VALID_MODES = {"A", "B"}
-VALID_ENTRYPOINTS = {"/bio-gpu-team"}
-VALID_SOURCE_STATUS = {"pending", "ready", "failed", "user_provided"}
-VALID_INSTALL_METHODS = {"auto", "git", "github", "gitcode", "pip", "conda", "local", "archive", "unknown"}
-VALID_PRECISION_POLICIES = {"auto", "planned", "approved", "fixed"}
+HARNESS_ROOT = os.path.normpath("/Users/huron/code/ai_lab/biogpu-harness")
 
-REQUIRED_TOP = ["tool_name", "mode", "harness", "paths", "source", "user_request", "benchmarks", "precision"]
-REQUIRED_HARNESS = ["root", "entrypoint", "version"]
 REQUIRED_PATHS = [
     "workspace_path", "bio_tool_path", "state_path",
     "reports_path", "runs_path", "benchmarks_path",
     "baseline_path", "logs_path", "artifacts_path",
 ]
-REQUIRED_SOURCE = ["status", "user_specified_source", "source_url", "version", "install_method"]
-REQUIRED_USER_REQUEST = ["summary", "priority", "speedup_target", "notes"]
-REQUIRED_BENCHMARKS_E2E = ["status"]
-REQUIRED_PRECISION = ["policy", "decided_by", "plan_path"]
 
 
 def _get(d, *keys):
@@ -41,57 +35,22 @@ def _get(d, *keys):
     return d
 
 
-def validate(cfg, filepath):
+def custom_validate(cfg):
+    """Path-relationship checks that cannot be expressed in JSON Schema."""
     errors = []
     warnings = []
 
-    # Top-level required keys
-    for key in REQUIRED_TOP:
-        if key not in cfg:
-            errors.append(f"Missing required field: {key}")
-
-    if errors:
-        return errors, warnings
-
-    # harness
-    harness = cfg.get("harness", {})
-    for key in REQUIRED_HARNESS:
-        if key not in harness:
-            errors.append(f"Missing required field: harness.{key}")
-    if harness.get("entrypoint") not in VALID_ENTRYPOINTS:
-        errors.append(f"harness.entrypoint must be one of {VALID_ENTRYPOINTS}, got: {harness.get('entrypoint')!r}")
-
-    # mode
-    mode = cfg.get("mode")
-    if mode not in VALID_MODES:
-        errors.append(f"mode must be one of {VALID_MODES}, got: {mode!r}")
-
-    # paths
     paths = cfg.get("paths", {})
-    for key in REQUIRED_PATHS:
-        if key not in paths:
-            errors.append(f"Missing required field: paths.{key}")
-
     workspace = paths.get("workspace_path", "")
+
     if workspace:
-        harness_root = os.path.normpath(HARNESS_ROOT)
         ws_norm = os.path.normpath(workspace)
-        if ws_norm == harness_root:
+        if ws_norm == HARNESS_ROOT:
             errors.append("paths.workspace_path must not be the biogpu-harness root")
-        if ws_norm.startswith(harness_root + os.sep):
+        if ws_norm.startswith(HARNESS_ROOT + os.sep):
             errors.append("paths.workspace_path must not be inside biogpu-harness")
 
-        # sub-path checks
-        sub_paths = {
-            "bio_tool_path": paths.get("bio_tool_path", ""),
-            "state_path": paths.get("state_path", ""),
-            "reports_path": paths.get("reports_path", ""),
-            "runs_path": paths.get("runs_path", ""),
-            "benchmarks_path": paths.get("benchmarks_path", ""),
-            "baseline_path": paths.get("baseline_path", ""),
-            "logs_path": paths.get("logs_path", ""),
-            "artifacts_path": paths.get("artifacts_path", ""),
-        }
+        sub_paths = {k: paths.get(k, "") for k in REQUIRED_PATHS if k != "workspace_path"}
         for name, p in sub_paths.items():
             if p and not os.path.normpath(p).startswith(ws_norm):
                 errors.append(f"paths.{name} must be under workspace_path")
@@ -99,43 +58,8 @@ def validate(cfg, filepath):
         state = paths.get("state_path", "")
         expected_state_dir = os.path.join(ws_norm, "state")
         if state and not os.path.normpath(state).startswith(expected_state_dir):
-            errors.append(f"paths.state_path must be under workspace_path/state/")
+            errors.append("paths.state_path must be under workspace_path/state/")
 
-    # source
-    source = cfg.get("source", {})
-    for key in REQUIRED_SOURCE:
-        if key not in source:
-            errors.append(f"Missing required field: source.{key}")
-    if source.get("status") not in VALID_SOURCE_STATUS:
-        errors.append(f"source.status must be one of {VALID_SOURCE_STATUS}, got: {source.get('status')!r}")
-    if source.get("install_method") not in VALID_INSTALL_METHODS:
-        errors.append(f"source.install_method must be one of {VALID_INSTALL_METHODS}, got: {source.get('install_method')!r}")
-
-    # user_request
-    user_request = cfg.get("user_request", {})
-    for key in REQUIRED_USER_REQUEST:
-        if key not in user_request:
-            errors.append(f"Missing required field: user_request.{key}")
-
-    # benchmarks
-    benchmarks = cfg.get("benchmarks", {})
-    for suite in ("primary_e2e", "double_check_e2e"):
-        if suite not in benchmarks:
-            errors.append(f"Missing required field: benchmarks.{suite}")
-        else:
-            for key in REQUIRED_BENCHMARKS_E2E:
-                if key not in benchmarks[suite]:
-                    errors.append(f"Missing required field: benchmarks.{suite}.{key}")
-
-    # precision
-    precision = cfg.get("precision", {})
-    for key in REQUIRED_PRECISION:
-        if key not in precision:
-            errors.append(f"Missing required field: precision.{key}")
-    if precision.get("policy") not in VALID_PRECISION_POLICIES:
-        errors.append(f"precision.policy must be one of {VALID_PRECISION_POLICIES}, got: {precision.get('policy')!r}")
-
-    # warnings
     if not cfg.get("tool_name"):
         warnings.append("tool_name is empty")
     if not _get(cfg, "user_request", "summary"):
@@ -151,27 +75,57 @@ def main():
     group.add_argument("--project", help="Path to biogpu_project.yaml")
     args = parser.parse_args()
 
-    if args.workspace:
-        filepath = os.path.join(args.workspace, "biogpu_project.yaml")
-    else:
-        filepath = args.project
+    filepath = (os.path.join(args.workspace, "biogpu_project.yaml")
+                if args.workspace else args.project)
 
     try:
         with open(filepath) as f:
             cfg = yaml.safe_load(f)
     except FileNotFoundError:
-        result = {"status": "fail", "file": filepath, "errors": [f"File not found: {filepath}"], "warnings": []}
-        print(json.dumps(result, indent=2))
+        out = {"status": "fail", "file": filepath,
+               "schema_errors": [], "custom_errors": [],
+               "errors": [f"File not found: {filepath}"], "warnings": []}
+        print(json.dumps(out, indent=2))
         sys.exit(1)
     except Exception as e:
-        result = {"status": "error", "file": filepath, "errors": [f"Failed to parse YAML: {e}"], "warnings": []}
-        print(json.dumps(result, indent=2))
+        out = {"status": "error", "file": filepath,
+               "schema_errors": [], "custom_errors": [],
+               "errors": [f"Failed to parse YAML: {e}"], "warnings": []}
+        print(json.dumps(out, indent=2))
         sys.exit(2)
 
-    errors, warnings = validate(cfg, filepath)
-    status = "pass" if not errors else "fail"
-    result = {"status": status, "file": filepath, "errors": errors, "warnings": warnings}
-    print(json.dumps(result, indent=2))
+    # ── 1. Schema validation ──────────────────────────────────────────────────
+    try:
+        schema = load_schema("biogpu_project.schema.json")
+        schema_errors = validate_against_schema(cfg, schema)
+    except Exception as e:
+        out = {"status": "error", "file": filepath,
+               "schema_errors": [], "custom_errors": [],
+               "errors": [f"Schema validation error: {e}"], "warnings": []}
+        print(json.dumps(out, indent=2))
+        sys.exit(2)
+
+    if schema_errors:
+        out = {"status": "fail", "file": filepath,
+               "schema_errors": schema_errors, "custom_errors": [],
+               "errors": [e["message"] for e in schema_errors], "warnings": []}
+        print(json.dumps(out, indent=2))
+        sys.exit(1)
+
+    # ── 2. Custom validation ──────────────────────────────────────────────────
+    custom_errors, warnings = custom_validate(cfg)
+
+    all_errors = [e for e in custom_errors]
+    status = "pass" if not all_errors else "fail"
+    out = {
+        "status": status,
+        "file": filepath,
+        "schema_errors": [],
+        "custom_errors": custom_errors,
+        "errors": all_errors,
+        "warnings": warnings,
+    }
+    print(json.dumps(out, indent=2))
     sys.exit(0 if status == "pass" else 1)
 
 
