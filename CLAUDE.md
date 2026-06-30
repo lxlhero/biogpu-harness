@@ -277,6 +277,10 @@ If rjob reports `brainpp only work in kubebrain environment`, run first:
 source /etc/profile.d/ssh-init.sh
 ```
 
+**All rjob submissions must use inline bash — never execute a shell script file.**
+
+The command to run must be written directly inside `-- bash -c '...'`, not via `-- bash /path/to/script.sh`. If the command is long, write it inline with line continuations (`\`). Scripts on GPFS cannot be trusted to exist or be up to date; inline commands are the single source of truth.
+
 All rjob submissions must use inline bash:
 
 ```bash
