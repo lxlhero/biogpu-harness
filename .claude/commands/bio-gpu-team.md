@@ -173,6 +173,18 @@ if mode = B:
 
 ## A 模式流程（从头 GPU 加速）
 
+**A3 profiling 的双重作用（必须理解）：**
+
+profiling 不仅用于找热点模块，同时也是 **L1 镜像的验收测试**。
+profiling rjob 必须完整跑通原版工具的全部 pipeline 步骤，才能认为 L1 镜像合格。
+
+如果 profiling rjob 失败：
+1. **立即诊断失败原因**（rjob logs / GPFS 日志），不得跳过
+2. 如果是镜像问题（依赖版本、缺包、API 不兼容等）→ 修复镜像，重建 L1，重提 rjob
+3. 如果是脚本问题（参数错误、路径错误）→ 修复脚本，重提 rjob
+4. 重提后必须等待 profiling 完整成功，才能进入 feasibility 分析
+5. 不得用部分步骤的计时数据代替完整 profiling 结果进行 feasibility 判断（Step1+2 通过不等于镜像合格）
+
 ```
 A0  项目初始化 → /bio-gpu-project-init
 A1  benchmark 准备 + 工具源码初始化 → bio-gpu-benchmark-agent

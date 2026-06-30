@@ -97,6 +97,37 @@ source /etc/profile.d/ssh-init.sh
 ```
 
 
+## 坑8 — profiling rjob 失败必须修复镜像，不得跳过
+
+**现象：** profiling Step1+2 成功，Step3 失败，直接用 Step1+2 的数据做 feasibility 分析。
+
+**错误做法：** 认为"已经看到热点（Step2 = 587s），继续推进"。
+
+**正确做法：**
+1. profiling 失败 = L1 镜像未通过验收，必须修复
+2. 查清失败原因，修复镜像，重新 build + push + 重提 rjob
+3. 等完整 profiling 成功后才能进入 feasibility
+
+**为什么：** profiling 是 L1 镜像的全流程验收测试。Step3 失败意味着 generate_ldscore 在这个镜像里无法运行，后续的 CPU baseline 和 GPU compare 也会在同样位置失败。
+
+
+## 坑9 — bitarray 版本不兼容导致 generate_ldscore 失败
+
+**现象：** `TypeError: float() argument must be a string or a real number, not 'bitarray.decodeiterator'`
+
+**根因：** gsMap 要求 `bitarray>=2.9.2,<3.0.0`，但镜像里通过 `pip install bitarray`（无版本锁定）安装了 3.8.1，3.x 的 `decode()` API 返回 `decodeiterator` 而不是 list。
+
+**修复：**
+```dockerfile
+RUN pip3 install --no-cache-dir \
+    -i http://mirrors.i.h.pjlab.org.cn/repository/pypi-proxy/simple/ \
+    --trusted-host mirrors.i.h.pjlab.org.cn \
+    "bitarray==2.9.3"
+```
+
+**预防：** 构建 L1 镜像时，对所有有版本上限的依赖（`<3.0.0`、`<2.0.0` 等）必须显式锁定版本，不能裸 `pip install package`。
+
+
 ## 坑7 — rjob 名称不能含大写字母或下划线
 
 **现象：** rjob 提交时报名称校验失败
