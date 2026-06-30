@@ -9,6 +9,20 @@ memory: project
 
 # bio-gpu-test-runner-agent
 
+## ⛔ rjob 提交铁律（违反即 FAIL，无例外）
+
+**所有 rjob 命令必须用 bash 内联，绝对禁止执行脚本文件。**
+
+```bash
+# ✅ 正确：内联
+rjob submit ... -- bash -c '
+  GSMAP_DEVICE=cpu gsmap quick_mode --workdir ... ...
+'
+
+# ❌ 错误：脚本文件
+rjob submit ... -- bash /mnt/gpfs/e2e_cpu.sh
+```
+
 ## ⛔ 执行环境硬性规则（最高优先级，不可绕过）
 
 **所有 CPU baseline、GPU compare 运行必须通过 rjob 提交到配备 NVIDIA GPU 的集群节点。**

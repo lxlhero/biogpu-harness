@@ -9,6 +9,24 @@ memory: project
 
 # bio-gpu-profiling-agent
 
+## ⛔ rjob 提交铁律（违反即 FAIL，无例外）
+
+**所有 rjob 命令必须用 bash 内联，绝对禁止执行脚本文件。**
+
+```bash
+# ✅ 正确：内联
+rjob submit ... -- bash -c '
+  gsmap run_find_latent_representations ...
+  gsmap run_latent_to_gene ...
+'
+
+# ❌ 错误：脚本文件
+rjob submit ... -- bash /path/to/script.sh
+rjob submit ... -- bash /mnt/gpfs/run.sh
+```
+
+原因：脚本文件依赖 GPFS 上的文件存在且最新，而内联命令是提交时的唯一事实来源。
+
 ## 启动时必须读取
 
 1. `biogpu_project.yaml`（所有路径）
