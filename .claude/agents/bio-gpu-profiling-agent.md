@@ -65,10 +65,15 @@ rjob submit \
 
 ### Phase 1：Profiling
 
-1. 编写 profiling 脚本（R: `Rprof`/`profvis`；Python: `cProfile`/`py-spy`）
-2. 提交 rjob 在 H200 集群上用 profiling benchmark 跑
-3. 整理热点模块列表：各模块耗时 + 占 E2E 比例，**过滤 < 10% 的模块**
-4. 将热点模块代码传给 bio-gpu-feasibility-agent 评估
+1. 提交 rjob 在 H200 集群上用 profiling benchmark 跑（bash 内联，不用脚本文件）
+2. **等待 rjob 完成**：循环执行 `rjob get <job_name>`，直到状态变为 Succeeded 或 Failed
+   - 每 3 分钟检查一次，打印当前状态
+   - 超时（>2 小时）或 Failed：写 `next_action=diagnose_failure`，返回 blocked
+3. rjob Succeeded 后，从 GPFS 读取日志，提取各步骤耗时
+4. 整理热点模块列表：各模块耗时 + 占 E2E 比例，**过滤 < 10% 的模块**
+5. 将热点模块代码传给 bio-gpu-feasibility-agent 评估
+
+**为什么必须等待：** orchestrator 依赖 agent 返回结果来路由 next_action。如果 agent fire-and-forget，orchestrator 无法自动推进，只能靠用户手动触发，破坏了 task_state.json 驱动的自动流程。
 
 ### Phase 2：Amdahl 综合判断
 
