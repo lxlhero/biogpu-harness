@@ -1,5 +1,18 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/huron/miniconda3/envs/biogpu-harness/bin/python /Users/huron/code/ai_lab/biogpu-harness/scripts/check_rjob_inline.py",
+            "timeout": 10,
+            "statusMessage": "BioGPU: checking rjob inline compliance..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit|MultiEdit",

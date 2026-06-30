@@ -145,13 +145,24 @@ def main():
     # ── 2. Custom validation ──────────────────────────────────────────────────
     custom_errors, warnings = custom_validate(state)
 
-    status = "pass" if not custom_errors else "fail"
+    # ── 3. Phase gate validation (A mode only) ────────────────────────────────
+    workspace = args.workspace if args.workspace else os.path.dirname(os.path.dirname(filepath))
+    try:
+        from check_phase_gate import check_gate
+        gate_violations = check_gate(state, workspace)
+    except ImportError:
+        gate_violations = []
+        warnings.append("check_phase_gate.py not found — phase gate skipped")
+
+    all_errors = custom_errors + gate_violations
+    status = "pass" if not all_errors else "fail"
     out = {
         "status": status,
         "file": filepath,
         "schema_errors": [],
         "custom_errors": custom_errors,
-        "errors": custom_errors,
+        "gate_violations": gate_violations,
+        "errors": all_errors,
         "warnings": warnings,
     }
     print(json.dumps(out, indent=2))
